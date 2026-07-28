@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sqlite3
 from pathlib import Path
@@ -11,9 +13,11 @@ from langgraph.types import Command
 
 from app.agents.workflow import JobPilotState, build_workflow
 from app.agents.writer import EvidenceWriter, OpenAIResponsesBackend
-from app.api.workflow_models import WorkflowRunResponse
+from app.api.workflow_models import EditableClaim, WorkflowRunResponse
 from app.exporters import export_tailored_docx
-from app.schemas import TailoringRequest, TailoringResult
+from app.schemas import Claim, EvidenceMap, TailoringRequest, TailoringResult
+from app.schemas.models import SupportStatus
+from app.services.validator import validate_claim
 
 
 class WorkflowNotFoundError(KeyError):
@@ -36,10 +40,7 @@ class WorkflowManager:
         self.checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
         self.export_dir = Path(export_dir)
         self.export_dir.mkdir(parents=True, exist_ok=True)
-        self._connection = sqlite3.connect(
-            self.checkpoint_path,
-            check_same_thread=False,
-        )
+        self._connection = sqlite3.connect(self.checkpoint_path, check_same_thread=False)
         self._checkpointer = SqliteSaver(self._connection)
         model_enabled = bool(os.getenv("OPENAI_API_KEY")) if use_model is None else use_model
         writer = EvidenceWriter(OpenAIResponsesBackend()) if model_enabled else None
@@ -54,10 +55,7 @@ class WorkflowManager:
         self._connection.close()
 
     def start(
-        self,
-        request: TailoringRequest,
-        *,
-        thread_id: UUID | None = None,
+        self, request: TailoringRequest, *, thread_id: UUID | None = None
     ) -> WorkflowRunResponse:
         workflow_id = thread_id or uuid4()
         with self._lock:
@@ -65,10 +63,7 @@ class WorkflowManager:
             if existing.values:
                 raise WorkflowStateError(f"Workflow already exists: {workflow_id}")
             initial_state: JobPilotState = {"request": request.model_dump(mode="json")}
-            output = self.graph.invoke(
-                initial_state,
-                config=self._config(workflow_id),
-            )
+            output = self.graph.invoke(initial_state, config=self._config(workflow_id))
         return self._response(workflow_id, output)
 
     def get(self, thread_id: UUID) -> WorkflowRunResponse:
@@ -85,27 +80,82 @@ class WorkflowManager:
         ]
         return self._response(thread_id, values, review=review)
 
-    def decide(self, thread_id: UUID, *, approved: bool) -> WorkflowRunResponse:
+    def list_workflows(self, *, limit: int = 50) -> list[WorkflowRunResponse]:
+        thread_ids: list[UUID] = []
+        seen: set[str] = set()
+        with self._lock:
+            checkpoints = self._checkpointer.list(None)
+            for checkpoint in checkpoints:
+                raw_id = str(checkpoint.config.get("configurable", {}).get("thread_id", ""))
+                if raw_id and raw_id not in seen:
+                    seen.add(raw_id)
+                    thread_ids.append(UUID(raw_id))
+                    if len(thread_ids) >= limit:
+                        break
+        return [self.get(thread_id) for thread_id in thread_ids]
+
+    def decide(
+        self, thread_id: UUID, *, approved: bool, claims: list[EditableClaim] | None = None
+    ) -> WorkflowRunResponse:
         current = self.get(thread_id)
         if current.status != "pending_review":
             raise WorkflowStateError(f"Workflow is not waiting for review: {current.status}")
+        config = self._config(thread_id)
         with self._lock:
+            if claims is not None:
+                snapshot = self.graph.get_state(config)
+                mappings = [
+                    EvidenceMap.model_validate(item)
+                    for item in snapshot.values.get("evidence_map", [])
+                ]
+                evidence_by_id = {
+                    evidence.source_id: evidence
+                    for mapping in mappings
+                    for evidence in mapping.evidence
+                }
+                validated: list[Claim] = []
+                for edited in claims:
+                    evidence = [
+                        evidence_by_id[item]
+                        for item in edited.evidence_ids
+                        if item in evidence_by_id
+                    ]
+                    if len(evidence) != len(edited.evidence_ids):
+                        raise WorkflowStateError("An edited claim references unknown evidence.")
+                    claim = validate_claim(edited.text, evidence)
+                    if claim.support_status != SupportStatus.SUPPORTED:
+                        raise WorkflowStateError(
+                            claim.review_reason or "Edited claim is not supported."
+                        )
+                    validated.append(claim)
+                self.graph.update_state(
+                    config, {"claims": [claim.model_dump(mode="json") for claim in validated]}
+                )
             command: Command[Any] = Command(resume={"approved": approved})
-            output = self.graph.invoke(
-                command,
-                config=self._config(thread_id),
-            )
+            output = self.graph.invoke(command, config=config)
         return self._response(thread_id, output)
+
+    def clone(self, thread_id: UUID) -> WorkflowRunResponse:
+        with self._lock:
+            snapshot = self.graph.get_state(self._config(thread_id))
+        if not snapshot.values:
+            raise WorkflowNotFoundError(str(thread_id))
+        request = TailoringRequest.model_validate(snapshot.values["request"])
+        return self.start(request)
+
+    def delete(self, thread_id: UUID) -> None:
+        self.get(thread_id)
+        with self._lock:
+            self._checkpointer.delete_thread(str(thread_id))
+        export_path = self.export_dir / f"{thread_id}.docx"
+        export_path.unlink(missing_ok=True)
 
     def export(self, thread_id: UUID) -> Path:
         current = self.get(thread_id)
         if current.status != "completed" or current.result is None:
             raise WorkflowStateError("Only approved, completed workflows can be exported.")
         destination = self.export_dir / f"{thread_id}.docx"
-        export_tailored_docx(
-            TailoringResult.model_validate(current.result),
-            destination,
-        )
+        export_tailored_docx(TailoringResult.model_validate(current.result), destination)
         return destination
 
     @staticmethod

@@ -1,19 +1,11 @@
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
 
-from app.api.workflow_manager import (
-    WorkflowManager,
-    WorkflowNotFoundError,
-    WorkflowStateError,
-)
-from app.api.workflow_models import (
-    WorkflowDecision,
-    WorkflowRunResponse,
-    WorkflowStartRequest,
-)
+from app.api.workflow_manager import WorkflowManager, WorkflowNotFoundError, WorkflowStateError
+from app.api.workflow_models import WorkflowDecision, WorkflowRunResponse, WorkflowStartRequest
 from app.schemas import TailoringRequest
 
 router = APIRouter(prefix="/v1/workflows", tags=["workflows"])
@@ -33,16 +25,20 @@ def _translate_error(error: Exception) -> HTTPException:
 
 
 @router.post("", response_model=WorkflowRunResponse, status_code=201)
-def start_workflow(
-    payload: WorkflowStartRequest,
-    request: Request,
-) -> WorkflowRunResponse:
+def start_workflow(payload: WorkflowStartRequest, request: Request) -> WorkflowRunResponse:
     manager = _manager(request)
     tailoring_request = TailoringRequest.model_validate(payload.model_dump(exclude={"thread_id"}))
     try:
         return manager.start(tailoring_request, thread_id=payload.thread_id)
     except WorkflowStateError as error:
         raise _translate_error(error) from error
+
+
+@router.get("", response_model=list[WorkflowRunResponse])
+def list_workflows(
+    request: Request, limit: int = Query(default=50, ge=1, le=100)
+) -> list[WorkflowRunResponse]:
+    return _manager(request).list_workflows(limit=limit)
 
 
 @router.get("/{thread_id}", response_model=WorkflowRunResponse)
@@ -55,14 +51,29 @@ def get_workflow(thread_id: UUID, request: Request) -> WorkflowRunResponse:
 
 @router.post("/{thread_id}/decision", response_model=WorkflowRunResponse)
 def decide_workflow(
-    thread_id: UUID,
-    payload: WorkflowDecision,
-    request: Request,
+    thread_id: UUID, payload: WorkflowDecision, request: Request
 ) -> WorkflowRunResponse:
     try:
-        return _manager(request).decide(thread_id, approved=payload.approved)
+        return _manager(request).decide(thread_id, approved=payload.approved, claims=payload.claims)
     except (WorkflowNotFoundError, WorkflowStateError) as error:
         raise _translate_error(error) from error
+
+
+@router.post("/{thread_id}/clone", response_model=WorkflowRunResponse, status_code=201)
+def clone_workflow(thread_id: UUID, request: Request) -> WorkflowRunResponse:
+    try:
+        return _manager(request).clone(thread_id)
+    except WorkflowNotFoundError as error:
+        raise _translate_error(error) from error
+
+
+@router.delete("/{thread_id}", status_code=204)
+def delete_workflow(thread_id: UUID, request: Request) -> Response:
+    try:
+        _manager(request).delete(thread_id)
+    except WorkflowNotFoundError as error:
+        raise _translate_error(error) from error
+    return Response(status_code=204)
 
 
 @router.get("/{thread_id}/export", response_class=FileResponse)
@@ -73,6 +84,6 @@ def export_workflow(thread_id: UUID, request: Request) -> FileResponse:
         raise _translate_error(error) from error
     return FileResponse(
         path,
-        media_type=("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=f"jobpilot-{thread_id}.docx",
     )

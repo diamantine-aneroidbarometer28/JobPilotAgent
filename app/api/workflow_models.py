@@ -10,8 +10,14 @@ class WorkflowStartRequest(TailoringRequest):
     thread_id: UUID | None = None
 
 
+class EditableClaim(BaseModel):
+    text: str = Field(min_length=1)
+    evidence_ids: list[str] = Field(min_length=1)
+
+
 class WorkflowDecision(BaseModel):
     approved: bool
+    claims: list[EditableClaim] | None = None
 
 
 class WorkflowRunResponse(BaseModel):

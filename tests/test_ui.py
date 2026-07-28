@@ -16,6 +16,8 @@ def test_ui_and_static_assets_are_served() -> None:
     assert script.status_code == 200
     assert 'jsonRequest("/v1/workflows"' in script.text
     assert "/v1/documents/upload" in script.text
+    assert "/v1/workflows?limit=12" in script.text
+    assert "claim-editor" in script.text
 
 
 def test_document_upload_returns_evidence_document() -> None:

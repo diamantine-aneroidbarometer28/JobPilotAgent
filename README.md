@@ -2,7 +2,7 @@
 
 An evidence-grounded job application copilot that parses job descriptions, retrieves evidence from personal project materials, drafts traceable resume claims, and tracks applications.
 
-> Current status: Milestones 1-3 are complete, and the Milestone 4 evaluation/export core is operational. The project includes resumable agent workflows, direct document upload, human approval, controlled offline evaluations, and audited DOCX export. It remains usable without a model API key.
+> Current status: v0.5.0 provides resumable evidence-grounded workflows, direct document upload, editable claims with server-side revalidation, local workflow history, controlled benchmarks, audited DOCX export, and production packaging. It remains usable without a model API key.
 
 ## Why JobPilot
 
@@ -23,7 +23,7 @@ JobPilot turns this process into an auditable workflow:
 - Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
 - Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
 - Detect numerical metrics that are absent from the supporting evidence.
-- Expose FastAPI endpoints and a responsive browser UI for document upload, tailoring, evidence review, approval, DOCX export, and application tracking.
+- Expose FastAPI endpoints and a responsive browser UI for document upload, tailoring, editable evidence review, workflow history, approval, DOCX export, and application tracking.
 - Persist application records with SQLite and SQLModel.
 - Test the parsing, retrieval, validation, and API vertical slice.
 
@@ -139,8 +139,11 @@ The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
 
 - `POST /v1/workflows` starts a run and pauses for claim review.
 - `POST /v1/documents/upload` extracts evidence from up to five PDF, DOCX, TXT, or Markdown files without persisting the uploads.
+- `GET /v1/workflows` lists recent resumable workflows.
 - `GET /v1/workflows/{thread_id}` returns saved state and review payloads.
-- `POST /v1/workflows/{thread_id}/decision` resumes with an approve or reject decision.
+- `POST /v1/workflows/{thread_id}/clone` creates a fresh run from the saved request.
+- `DELETE /v1/workflows/{thread_id}` removes its checkpoints and generated export.
+- `POST /v1/workflows/{thread_id}/decision` revalidates optional claim edits, then resumes with an approve or reject decision.
 - `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
 
 Without `OPENAI_API_KEY`, the API uses deterministic drafting. With a key configured, it enables the structured Responses writer while preserving local validation and human approval.
@@ -214,10 +217,48 @@ Run both offline baselines with:
 ```powershell
 uv run python -m evals.score_retrieval
 uv run python -m evals.score_grounding
+uv run python -m evals.benchmark_workflow --runs 5
 ```
 
 These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
+### Milestone 5: Product hardening and operations — baseline complete
+
+- Added editable claim review; every edit is revalidated against its cited evidence before approval.
+- Added local workflow history with open, clone, and delete operations.
+- Restored verified Chinese deterministic drafting and Chinese numerical-unit validation.
+- Added security response headers and metadata-only request logging; request bodies and uploaded content are not logged.
+- Added a dry-run-first generated-artifact cleanup command.
+- Added a privacy-scrubbed bilingual workflow benchmark. The current deterministic fixture (3 cases, 2 runs) averaged approximately 0.6 ms on the development machine with zero provider cost; machine-specific timing is not a production SLA.
+- Added GitHub Actions quality gates, Docker packaging, and Compose persistence.
+- Added an explicit online validation command that refuses to run without both an API key and `--confirm-spend`.
+
+Run operational checks with:
+
+```powershell
+uv run python -m evals.benchmark_workflow --runs 5
+uv run python -m app.maintenance --older-than-days 30
+uv run python -m app.maintenance --older-than-days 30 --apply
+```
+
+The online writer smoke test is intentionally opt-in and billable:
+
+```powershell
+$env:OPENAI_API_KEY = "your-key"
+uv run python -m evals.validate_online --confirm-spend
+```
+
+Use only privacy-scrubbed fixtures for the first online run. The command prints model, token, claim, blocked-claim, and estimated-cost fields. It was not executed during offline development because no project API key was supplied.
+
+## Deployment
+
+Local container deployment:
+
+```powershell
+docker compose up --build
+```
+
+The Compose volume persists checkpoints and generated exports under `/data`. The application sets CSP, frame, MIME-sniffing, referrer, and browser-permission headers. For internet-facing deployment, place it behind an authenticated TLS reverse proxy with request-size limits and rate limiting; the built-in UI is designed for trusted local or private-network use and does not claim to provide multi-tenant authentication.
 ## Development journal and lessons learned
 
 This journal records engineering decisions that materially changed the project. Dates describe the learning and development route rather than implying uninterrupted daily work.
@@ -244,7 +285,7 @@ This journal records engineering decisions that materially changed the project. 
 | OpenAI Python | `>=2.20,<3` | Supports parsed structured Responses output used by the optional writer. |
 | pypdf / python-docx | `>=6.6,<7` / `>=1.2,<2` | Current document parsing APIs with bounded major versions. |
 | python-multipart | resolved to `0.0.32` | Required by FastAPI multipart uploads and locked by `uv.lock`. |
-| Project release | `0.4.0` | Aligns package and API versions after direct upload and UI hardening. |
+| Project release | `0.5.0` | Aligns package and API versions after workflow management, safety, benchmarks, CI, and deployment work. |
 
 ### Problems encountered and how to reproduce the checks
 
@@ -254,6 +295,7 @@ This journal records engineering decisions that materially changed the project. 
 - **Optional document imports:** if PDF or DOCX support is unavailable, run `uv sync --extra documents`. The core deterministic text workflow remains independently testable.
 - **Known test warning:** the current Starlette/FastAPI `TestClient` stack reports an upstream `httpx` deprecation warning. It is monitored rather than suppressed; the dependency range will be changed after the supported migration path is stable.
 - **No API key:** leave `OPENAI_API_KEY` unset to use deterministic drafting. This is a supported mode, not a degraded test workaround.
+- **Docker verification:** Docker and Compose files are included, but the development Windows environment did not have the Docker CLI installed. The Python package build was verified locally; run `docker compose build` on a Docker-enabled host before production deployment.
 
 Run the engineering gates after environment or dependency changes:
 

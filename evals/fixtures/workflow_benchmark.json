@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "job_description": "Build Python and FastAPI services with typed validation and SQL persistence.",
+      "documents": [
+        {
+          "source_id": "api-project",
+          "source_path": "scrubbed-api-project.md",
+          "content": "Built Python FastAPI endpoints with Pydantic validation and SQLite persistence."
+        }
+      ],
+      "language": "en"
+    },
+    {
+      "job_description": "岗位需要使用 Python 和 FastAPI 开发接口，并编写自动化测试。",
+      "documents": [
+        {
+          "source_id": "cn-project",
+          "source_path": "scrubbed-project-zh.md",
+          "content": "使用 Python 和 FastAPI 开发接口，并使用 Pytest 编写自动化测试。"
+        }
+      ],
+      "language": "zh"
+    },
+    {
+      "job_description": "Design evidence-grounded RAG workflows with LangGraph and evaluation.",
+      "documents": [
+        {
+          "source_id": "agent-project",
+          "source_path": "scrubbed-agent-project.md",
+          "content": "Implemented a LangGraph evidence workflow with retrieval evaluation and human approval."
+        }
+      ],
+      "language": "en"
+    }
+  ]
+}

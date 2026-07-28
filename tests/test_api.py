@@ -29,3 +29,12 @@ def test_tailor_end_to_end() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["claims"][0]["evidence_ids"] == ["project#chunk-1"]
+
+
+def test_security_headers_are_present() -> None:
+    with TestClient(app) as client:
+        response = client.get("/health")
+
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert "frame-ancestors 'none'" in response.headers["content-security-policy"]

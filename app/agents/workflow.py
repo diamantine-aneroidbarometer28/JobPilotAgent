@@ -54,18 +54,14 @@ def deterministic_draft_node(state: JobPilotState) -> JobPilotState:
     claims: list[Claim] = []
     blocked: list[Claim] = []
     for mapping in mappings:
-        skill_text = (
-            ("、".join(mapping.requirement.skills) or "相关能力")
-            if request.language == "zh"
-            else (", ".join(mapping.requirement.skills) or "relevant skills")
-        )
-        draft = (
-            f"运用{skill_text}完成与“{mapping.requirement.text}”相关的项目工作。"
-            if request.language == "zh"
-            else (
+        if request.language == "zh":
+            skill_text = "、".join(mapping.requirement.skills) or "相关能力"
+            draft = f"运用{skill_text}完成与“{mapping.requirement.text}”相关的项目工作。"
+        else:
+            skill_text = ", ".join(mapping.requirement.skills) or "relevant skills"
+            draft = (
                 f'Applied {skill_text} in project work aligned with "{mapping.requirement.text}".'
             )
-        )
         claim = validate_claim(draft, mapping.evidence)
         target = claims if claim.support_status == SupportStatus.SUPPORTED else blocked
         target.append(claim)

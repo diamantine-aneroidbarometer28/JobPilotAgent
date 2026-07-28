@@ -1,10 +1,12 @@
+import logging
 import os
-from collections.abc import AsyncIterator
+import time
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -22,6 +24,7 @@ from app.services.tailoring import tailor
 from app.storage.database import create_application, create_db_and_tables, list_applications
 
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
+LOGGER = logging.getLogger("jobpilot.api")
 MAX_UPLOAD_FILES = 5
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
@@ -42,10 +45,37 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="JobPilot Agent",
-    version="0.4.0",
+    version="0.5.0",
     description="Evidence-grounded job application copilot",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def operational_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    started = time.perf_counter()
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; style-src 'self'; script-src 'self'; "
+        "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+    )
+    LOGGER.info(
+        "request method=%s path=%s status=%s duration_ms=%.2f",
+        request.method,
+        request.url.path,
+        response.status_code,
+        (time.perf_counter() - started) * 1000,
+    )
+    return response
+
+
 app.include_router(workflow_router)
 app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
 

@@ -1,0 +1,13 @@
+services:
+  jobpilot:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      JOBPILOT_LOG_LEVEL: INFO
+    volumes:
+      - jobpilot-data:/data
+    restart: unless-stopped
+
+volumes:
+  jobpilot-data:
