@@ -218,6 +218,55 @@ uv run python -m evals.score_grounding
 
 These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
+## Development journal and lessons learned
+
+This journal records engineering decisions that materially changed the project. Dates describe the learning and development route rather than implying uninterrupted daily work.
+
+| Period | Problem or learning focus | Decision and project outcome | Reusable lesson |
+|---|---|---|---|
+| May 25–31 | Grounded generation can still produce fluent but unsupported claims. | Defined evidence IDs, support states, and a rule that exportable claims must cite evidence. | Safety requirements should become data-model invariants, not prompt-only instructions. |
+| June 10–20 | Loosely shaped dictionaries made validation and API evolution fragile. | Adopted Pydantic v2 contracts for requirements, evidence, claims, requests, and structured model output. | Typed boundaries make agent state, API payloads, and tests evolve together. |
+| June 24–July 6 | Keyword retrieval needed traceability and bilingual normalization. | Added structure-aware chunks, skill aliases, source paths, stable IDs, and Recall@5 fixtures. | Retrieval quality is only useful when its provenance survives every downstream step. |
+| July 10–20 | Human approval had to survive process restarts. | Used LangGraph interrupts with SQLite checkpoints and UUID thread IDs. | An approval screen is not a safety boundary unless the underlying state is resumable and auditable. |
+| July 23–27 | Model output could contain invented metrics even when evidence IDs looked valid. | Added local post-generation evidence and numerical-metric validation. | Structured model output improves shape, but deterministic validation must still enforce truthfulness. |
+| July 28 | PDF/DOCX support introduced optional binary/document dependencies. | Standardized on Python 3.11 and bounded dependency ranges; document support remains an explicit extra. | Choose the runtime with the strongest ecosystem compatibility, then lock exact resolved versions. |
+| July 28 | Browser uploads could leak filenames, consume excessive memory, or fail with opaque 500 errors. | Parse in memory, strip path components, cap uploads at five files and 5 MB each, close resources, and convert malformed documents to 422 responses. | Treat uploads as untrusted input even in a local-first application. |
+| July 28 | Windows sandbox tooling intermittently returned `helper_unknown_error`, and PowerShell 5 could reinterpret BOM-less UTF-8 as a legacy encoding. | Kept all writes inside the repository, used narrowly scoped approved commands when required, restored text from Git blobs when needed, and wrote UTF-8 explicitly without a BOM. | Tooling failures and product failures are different; preserve a clean Git checkpoint and verify encoding before committing. |
+| July 28 | Static UI assets needed to work from an installed wheel without adding a Node runtime. | Kept the interface in packaged HTML/CSS/JavaScript and verified wheel contents plus JavaScript syntax. | A simpler deployment surface can be more valuable than a larger frontend toolchain for a local-first product. |
+
+### Compatibility decisions
+
+| Component | Selected range or version | Reason |
+|---|---|---|
+| Python | `>=3.11,<3.13` | Stable typing features and strong compatibility with the selected agent, API, and document libraries. |
+| FastAPI | `>=0.128,<1` | Pydantic v2 support while avoiding an unreviewed major-version change. |
+| LangGraph | `>=1.2,<2` | Supports interrupt/resume workflows and SQLite checkpoint integration. |
+| OpenAI Python | `>=2.20,<3` | Supports parsed structured Responses output used by the optional writer. |
+| pypdf / python-docx | `>=6.6,<7` / `>=1.2,<2` | Current document parsing APIs with bounded major versions. |
+| python-multipart | resolved to `0.0.32` | Required by FastAPI multipart uploads and locked by `uv.lock`. |
+| Project release | `0.4.0` | Aligns package and API versions after direct upload and UI hardening. |
+
+### Problems encountered and how to reproduce the checks
+
+- **Windows sandbox helper failure:** this affects some local command launches, not the application runtime. Retry with a narrowly scoped workspace command; do not disable filesystem protections globally.
+- **PowerShell UTF-8 handling:** use an editor configured for UTF-8 or explicit .NET UTF-8 APIs when modifying BOM-less files. Always run `git diff --check` and inspect documentation diffs before committing.
+- **Malformed PDF or DOCX uploads:** the API returns `422` with a safe parsing message. Unsupported extensions also return `422`; files above 5 MB return `413`.
+- **Optional document imports:** if PDF or DOCX support is unavailable, run `uv sync --extra documents`. The core deterministic text workflow remains independently testable.
+- **Known test warning:** the current Starlette/FastAPI `TestClient` stack reports an upstream `httpx` deprecation warning. It is monitored rather than suppressed; the dependency range will be changed after the supported migration path is stable.
+- **No API key:** leave `OPENAI_API_KEY` unset to use deterministic drafting. This is a supported mode, not a degraded test workaround.
+
+Run the engineering gates after environment or dependency changes:
+
+```powershell
+uv lock --check
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy app evals
+uv run pytest
+uv build
+```
+
+The controlled retrieval and grounding fixtures should also be rerun whenever parsing, chunking, retrieval, drafting, or validation changes.
 ## Acceptance targets
 
 - Tailoring cycle under 10 minutes.

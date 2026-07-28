@@ -22,6 +22,8 @@ from app.services.tailoring import tailor
 from app.storage.database import create_application, create_db_and_tables, list_applications
 
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
+MAX_UPLOAD_FILES = 5
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -40,7 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="JobPilot Agent",
-    version="0.3.0",
+    version="0.4.0",
     description="Evidence-grounded job application copilot",
     lifespan=lifespan,
 )
@@ -60,22 +62,29 @@ def health() -> dict[str, str]:
 
 @app.post("/v1/documents/upload", response_model=list[EvidenceDocument])
 async def upload_documents(
-    files: Annotated[list[UploadFile], File(min_length=1, max_length=5)],
+    files: Annotated[
+        list[UploadFile],
+        File(min_length=1, max_length=MAX_UPLOAD_FILES),
+    ],
 ) -> list[EvidenceDocument]:
     documents: list[EvidenceDocument] = []
     for upload in files:
-        filename = Path(upload.filename or "").name
-        if not filename:
-            raise HTTPException(status_code=400, detail="Every upload requires a filename.")
-        content = await upload.read(5 * 1024 * 1024 + 1)
-        if len(content) > 5 * 1024 * 1024:
-            raise HTTPException(
-                status_code=413, detail=f"{filename} exceeds the 5 MB upload limit."
-            )
         try:
-            documents.append(load_uploaded_document(filename, content))
-        except (UnsupportedDocumentError, ValueError) as error:
-            raise HTTPException(status_code=422, detail=str(error)) from error
+            filename = Path(upload.filename or "").name
+            if not filename:
+                raise HTTPException(status_code=400, detail="Every upload requires a filename.")
+            content = await upload.read(MAX_UPLOAD_BYTES + 1)
+            if len(content) > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"{filename} exceeds the 5 MB upload limit.",
+                )
+            try:
+                documents.append(load_uploaded_document(filename, content))
+            except (UnsupportedDocumentError, ValueError) as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+        finally:
+            await upload.close()
     return documents
 
 

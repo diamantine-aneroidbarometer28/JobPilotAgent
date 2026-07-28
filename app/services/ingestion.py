@@ -100,24 +100,32 @@ def load_uploaded_document(filename: str, content: bytes) -> EvidenceDocument:
             from pypdf import PdfReader
         except ImportError as error:
             raise RuntimeError("Install document extras with: uv sync --extra documents") from error
-        extracted = "\n\n".join(
-            page.extract_text() or "" for page in PdfReader(BytesIO(content)).pages
-        )
+        try:
+            extracted = "\n\n".join(
+                page.extract_text() or "" for page in PdfReader(BytesIO(content)).pages
+            )
+        except Exception as error:
+            raise ValueError(f"Could not parse PDF upload: {filename}") from error
     else:
         try:
             from docx import Document
         except ImportError as error:
             raise RuntimeError("Install document extras with: uv sync --extra documents") from error
-        document = Document(BytesIO(content))
-        blocks = [
-            paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()
-        ]
-        for table in document.tables:
-            for row in table.rows:
-                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if cells:
-                    blocks.append(" | ".join(cells))
-        extracted = "\n\n".join(blocks)
+        try:
+            document = Document(BytesIO(content))
+            blocks = [
+                paragraph.text.strip()
+                for paragraph in document.paragraphs
+                if paragraph.text.strip()
+            ]
+            for table in document.tables:
+                for row in table.rows:
+                    cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if cells:
+                        blocks.append(" | ".join(cells))
+            extracted = "\n\n".join(blocks)
+        except Exception as error:
+            raise ValueError(f"Could not parse DOCX upload: {filename}") from error
 
     extracted = extracted.strip()
     if not extracted:
