@@ -174,14 +174,17 @@ Run the reproducible baseline with:
 uv run python -m evals.score_retrieval
 ```
 
-### Milestone 3: Agent workflow — deterministic graph complete
+### Milestone 3: Agent workflow — complete
 
 - Implemented explicit LangGraph parse, retrieve, draft, approval, and finalize nodes.
 - Implemented JSON-serializable state and human review with `interrupt()` / `Command(resume=...)`.
 - Implemented SQLite checkpoints and verified recovery in a newly opened graph process.
-- Next: OpenAI Responses API structured writing, retry policy, and token/cost accounting.
+- Added OpenAI Responses API structured writing with Pydantic parsing.
+- Added bounded exponential-backoff retries for transient provider errors.
+- Added token accounting and model-aware cost estimates.
+- Preserved local evidence-ID and metric validation after model generation.
 
-The workflow remains safe by default: it pauses before claims become exportable and requires an explicit approval decision using the same thread ID.
+The workflow remains safe by default: it pauses before claims become exportable and requires an explicit approval decision using the same thread ID. The default model is `gpt-5.6-terra` for a quality/cost balance. Cost estimates use the public rates recorded on 2026-07-28 and should be reviewed when model pricing changes; cached-token adjustments are not yet included.
 
 ### Milestone 4: Offline evaluation and export
 

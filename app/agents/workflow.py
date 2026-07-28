@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
 
+from app.agents.writer import EvidenceWriter
 from app.schemas import (
     Claim,
     EvidenceMap,
@@ -28,6 +29,8 @@ class JobPilotState(TypedDict, total=False):
     evidence_map: list[dict[str, Any]]
     claims: list[dict[str, Any]]
     blocked_claims: list[dict[str, Any]]
+    token_usage: dict[str, Any]
+    writer_attempts: int
     approval_status: str
     result: dict[str, Any]
 
@@ -45,7 +48,7 @@ def retrieve_node(state: JobPilotState) -> JobPilotState:
     return {"evidence_map": [mapping.model_dump(mode="json") for mapping in mappings]}
 
 
-def draft_node(state: JobPilotState) -> JobPilotState:
+def deterministic_draft_node(state: JobPilotState) -> JobPilotState:
     request = TailoringRequest.model_validate(state["request"])
     mappings = [EvidenceMap.model_validate(item) for item in state["evidence_map"]]
     claims: list[Claim] = []
@@ -72,12 +75,25 @@ def draft_node(state: JobPilotState) -> JobPilotState:
     }
 
 
+def model_draft_node(state: JobPilotState, writer: EvidenceWriter) -> JobPilotState:
+    request = TailoringRequest.model_validate(state["request"])
+    mappings = [EvidenceMap.model_validate(item) for item in state["evidence_map"]]
+    result = writer.write(mappings, request.language)
+    return {
+        "claims": [claim.model_dump(mode="json") for claim in result.claims],
+        "blocked_claims": [claim.model_dump(mode="json") for claim in result.blocked_claims],
+        "token_usage": result.usage.model_dump(mode="json"),
+        "writer_attempts": result.attempts,
+    }
+
+
 def approval_node(state: JobPilotState) -> JobPilotState:
     decision = interrupt(
         {
             "type": "claim_review",
             "claims": state.get("claims", []),
             "blocked_claims": state.get("blocked_claims", []),
+            "token_usage": state.get("token_usage"),
             "instruction": "Approve or reject the evidence-grounded claims.",
         }
     )
@@ -100,11 +116,16 @@ def finalize_node(state: JobPilotState) -> JobPilotState:
 
 def build_workflow(
     checkpointer: BaseCheckpointSaver[Any],
+    *,
+    writer: EvidenceWriter | None = None,
 ) -> CompiledStateGraph[JobPilotState, None, JobPilotState, JobPilotState]:
     builder = StateGraph(JobPilotState)
     builder.add_node("parse", parse_node)
     builder.add_node("retrieve", retrieve_node)
-    builder.add_node("draft", draft_node)
+    if writer is None:
+        builder.add_node("draft", deterministic_draft_node)
+    else:
+        builder.add_node("draft", lambda state: model_draft_node(state, writer))
     builder.add_node("approval", approval_node)
     builder.add_node("finalize", finalize_node)
     builder.add_edge(START, "parse")
@@ -119,6 +140,8 @@ def build_workflow(
 @contextmanager
 def sqlite_workflow(
     path: str | Path,
+    *,
+    writer: EvidenceWriter | None = None,
 ) -> Iterator[CompiledStateGraph[JobPilotState, None, JobPilotState, JobPilotState]]:
     with SqliteSaver.from_conn_string(str(path)) as checkpointer:
-        yield build_workflow(checkpointer)
+        yield build_workflow(checkpointer, writer=writer)
