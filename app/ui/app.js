@@ -192,3 +192,9 @@ downloadButton.addEventListener("click", async (event) => {
 });
 
 loadApplications();
+const requestedThread = new URLSearchParams(window.location.search).get("thread");
+if (requestedThread) {
+  jsonRequest(`/v1/workflows/${requestedThread}`)
+    .then((run) => renderRun(run))
+    .catch((error) => showError(error.message));
+}

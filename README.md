@@ -17,6 +17,48 @@ JobPilot demonstrates an end-to-end applied AI system rather than a prompt wrapp
 - editable claims cannot be approved unless the edited text still passes deterministic evidence validation;
 - the FastAPI service, responsive interface, application tracker, offline evaluations, CI, and package build form one testable vertical slice.
 
+## Demo and interface tour
+
+The screenshots below were captured from the running FastAPI application with fictional, privacy-safe demo data. They show the actual packaged HTML/CSS/JavaScript interface rather than design mockups.
+
+### 1. Product overview
+
+![JobPilot product overview](docs/images/jobpilot-overview.png)
+
+The landing view introduces the evidence-first workflow and the three product guarantees:
+
+- **Traceable:** every exportable claim retains its source ID.
+- **Private by default:** uploaded documents are parsed in memory and are not saved as source files.
+- **Human controlled:** the workflow pauses before approval and export.
+
+### 2. Evidence review and complete application materials
+
+![JobPilot evidence review workspace](docs/images/jobpilot-review.png)
+
+The review workspace connects the core engineering features in one flow:
+
+1. Paste a job description and upload PDF, DOCX, Markdown, or text evidence.
+2. Generate requirement-to-evidence mappings and inspect supported or blocked claims.
+3. Edit a claim; the API revalidates its evidence IDs, lexical support, and metrics.
+4. Approve supported claims to create an application summary and cover letter.
+5. Download a DOCX containing the approved material and an Evidence Audit appendix.
+6. Reopen, clone, archive, or delete the resumable workflow from local history.
+
+A saved workflow can be opened directly for a demo with `/?thread=<workflow-uuid>#workflow`.
+
+### 3. Application pipeline
+
+![JobPilot application tracking pipeline](docs/images/jobpilot-pipeline.png)
+
+The application tracker turns generated material into an actionable job-search workflow:
+
+- add a company, role, current status, due date, and next action;
+- filter Draft, Applied, Interview, Offer, and Closed applications;
+- update progress inline or remove obsolete records;
+- jump from an application card back to the tailoring workspace;
+- keep all records in the local SQLite database.
+
+All names and roles shown in these screenshots are fictional demo data.
 ### 90-second demo
 
 1. Start the server and open `http://127.0.0.1:8000/`.

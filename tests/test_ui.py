@@ -23,6 +23,7 @@ def test_ui_and_static_assets_are_served() -> None:
     assert "Application tracker" in page.text
     assert "application-board" in page.text
     assert "/v1/applications" in script.text
+    assert "requestedThread" in script.text
     assert "鈥" not in page.text
 
 
