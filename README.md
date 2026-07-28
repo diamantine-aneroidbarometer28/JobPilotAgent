@@ -1,10 +1,28 @@
 # JobPilot Agent
 
-[![Quality](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml/badge.svg)](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml) ![Python](https://img.shields.io/badge/Python-3.11-3776AB) ![Version](https://img.shields.io/badge/version-0.7.0-176847)
+**An evidence-grounded job application copilot with resumable human approval.**
 
-An evidence-grounded job application copilot that parses job descriptions, retrieves evidence from personal project materials, drafts traceable resume claims, and tracks applications.
+[![Quality](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml/badge.svg)](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml)
+[![Release](https://img.shields.io/github/v/release/YueranCao2001/JobPilotAgent?display_name=tag&sort=semver)](https://github.com/YueranCao2001/JobPilotAgent/releases/latest)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 
-> Current status: v0.7.0 is a portfolio-ready local application copilot with evidence-grounded material generation, human approval, audited DOCX export, resumable workflow history, and a complete application tracking board. It remains usable without a model API key.
+JobPilot turns job descriptions and personal project materials into traceable resume claims, application summaries, cover letters, audited DOCX exports, and an actionable application pipeline. Every exportable claim must cite source evidence, edited claims are revalidated on the server, and the workflow pauses for explicit human approval.
+
+> **Release status:** v0.7.0 is portfolio-ready for trusted local or private-network use. The complete deterministic workflow runs without a model API key; an OpenAI key optionally enables structured model-assisted writing.
+
+## At a glance
+
+| Area | What JobPilot provides |
+|---|---|
+| Grounding | Stable evidence IDs, source paths, support states, and numerical-metric checks |
+| Workflow | LangGraph interrupt/resume with SQLite checkpoints and editable human review |
+| Outputs | Tailored claims, application summary, cover letter, and audited DOCX |
+| Product surface | Responsive browser workspace, workflow history, and application pipeline |
+| Operation | Local-first FastAPI service, optional access token, rate limit, Docker, and CI |
+| Quality baseline | 43 tests; controlled Recall@5 1.00; grounding precision 1.00; unsupported-claim rate 0.00 |
+
+**Documentation:** [Demo](#demo-and-interface-tour) | [Architecture](#architecture) | [Quick start](#quick-start) | [Workflow API](#workflow-api) | [Evaluation](#quality-and-evaluation) | [Roadmap](#milestones) | [Safety](#privacy-and-safety)
 
 ## Portfolio highlights
 
@@ -59,6 +77,7 @@ The application tracker turns generated material into an actionable job-search w
 - keep all records in the local SQLite database.
 
 All names and roles shown in these screenshots are fictional demo data.
+
 ### 90-second demo
 
 1. Start the server and open `http://127.0.0.1:8000/`.
@@ -75,6 +94,7 @@ All names and roles shown in these screenshots are fictional demo data.
 - How local-first operation reduces privacy and deployment complexity.
 - Where controlled fixtures are useful and where real-material evaluation is still required.
 - Why single-process rate limiting and a shared token are bounded private-deployment controls, not multi-tenant security.
+
 ## Why JobPilot
 
 Job seekers repeatedly analyze job descriptions, identify skill gaps, locate project evidence, tailor resumes, write outreach, and track applications. Using a general-purpose language model directly can produce unsupported experience or invented metrics.
@@ -97,6 +117,28 @@ JobPilot turns this process into an auditable workflow:
 - Expose FastAPI endpoints and a responsive browser UI for document upload, tailoring, editable evidence review, workflow history, approval, DOCX export, and application tracking.
 - Persist application records with SQLite and SQLModel.
 - Test the parsing, retrieval, validation, and API vertical slice.
+
+## Quality and evaluation
+
+The repository includes unit, API, workflow-resume, document-ingestion, export, security, and UI regression coverage. Retrieval and grounding scores use controlled fixtures so they remain reproducible; they are engineering baselines, not claims about every real resume or job description.
+
+| Check | Current result |
+|---|---:|
+| Automated tests | 43 passing |
+| Controlled retrieval Recall@5 | 1.00 |
+| Controlled grounding precision | 1.00 |
+| Controlled unsupported-claim rate | 0.00 |
+| Static quality gates | Ruff, mypy, JavaScript syntax, package build |
+
+```powershell
+uv lock --check
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy app evals
+uv run pytest
+uv run python -m evals.score_retrieval
+uv run python -m evals.score_grounding
+```
 
 ## Architecture
 
@@ -168,7 +210,7 @@ The current milestone does not require Node.js or Docker. Supported Python versi
 ## Quick start
 
 ```powershell
-git clone https://github.com/<your-account>/JobPilotAgent.git
+git clone https://github.com/YueranCao2001/JobPilotAgent.git
 cd JobPilotAgent
 uv sync --extra documents
 uv run uvicorn app.api.main:app --reload
@@ -298,7 +340,7 @@ uv run python -m evals.benchmark_workflow --runs 5
 
 These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
-### Milestone 7: Portfolio and job-search readiness — complete
+### Milestone 5: Portfolio and job-search readiness — complete
 
 - Added a responsive application pipeline with create, filter, update, and delete operations.
 - Added draft, applied, interview, offer, and closed status views with due dates and next actions.
@@ -306,6 +348,7 @@ These controlled fixtures are regression baselines, not claims about performance
 - Rebuilt the HTML template with encoding-safe entities and added a regression assertion for historical mojibake.
 - Added token-aware authenticated DOCX downloads from the browser.
 - Added recruiter-oriented project highlights, a 90-second demo, and engineering discussion points.
+
 ### Milestone 6: Complete materials, archival, and private access — complete
 
 - Added evidence-constrained application summaries and cover letters generated only from approved claims.
@@ -323,7 +366,8 @@ uv run uvicorn app.api.main:app --host 127.0.0.1 --port 8000
 ```
 
 The built-in limiter is intentionally small and process-local. Multi-worker or internet-facing deployments must enforce distributed rate limits and authentication at the reverse proxy or gateway. The access token protects API routes but is not a multi-user account system.
-### Milestone 5: Product hardening and operations — baseline complete
+
+### Milestone 7: Product hardening and operations — baseline complete
 
 - Added editable claim review; every edit is revalidated against its cited evidence before approval.
 - Added local workflow history with open, clone, and delete operations.
@@ -360,6 +404,7 @@ docker compose up --build
 ```
 
 The Compose volume persists checkpoints and generated exports under `/data`. The application sets CSP, frame, MIME-sniffing, referrer, and browser-permission headers. For internet-facing deployment, place it behind an authenticated TLS reverse proxy with request-size limits and rate limiting; the built-in UI is designed for trusted local or private-network use and does not claim to provide multi-tenant authentication.
+
 ## Development journal and lessons learned
 
 This journal records engineering decisions that materially changed the project. Dates describe the learning and development route rather than implying uninterrupted daily work.
@@ -412,6 +457,7 @@ uv build
 ```
 
 The controlled retrieval and grounding fixtures should also be rerun whenever parsing, chunking, retrieval, drafting, or validation changes.
+
 ## Acceptance targets
 
 - Tailoring cycle under 10 minutes.
