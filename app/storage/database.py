@@ -3,8 +3,12 @@ from datetime import date, datetime
 
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
-from app.schemas import ApplicationCreate, ApplicationRead
+from app.schemas import ApplicationCreate, ApplicationRead, ApplicationUpdate
 from app.schemas.models import utc_now
+
+
+class ApplicationNotFoundError(KeyError):
+    """Raised when an application record does not exist."""
 
 
 class ApplicationRecord(SQLModel, table=True):
@@ -31,11 +35,39 @@ def create_application(payload: ApplicationCreate) -> ApplicationRead:
         session.add(record)
         session.commit()
         session.refresh(record)
-        return ApplicationRead.model_validate(record)
+        return ApplicationRead.model_validate(record, from_attributes=True)
 
 
-def list_applications() -> list[ApplicationRead]:
+def list_applications(*, status: str | None = None) -> list[ApplicationRead]:
     with Session(engine) as session:
-        records = session.exec(select(ApplicationRecord)).all()
-        ordered_records = sorted(records, key=lambda record: record.created_at)
-        return [ApplicationRead.model_validate(record) for record in ordered_records]
+        statement = select(ApplicationRecord)
+        if status:
+            statement = statement.where(ApplicationRecord.status == status)
+        records = session.exec(statement).all()
+        ordered_records = sorted(records, key=lambda record: record.created_at, reverse=True)
+        return [
+            ApplicationRead.model_validate(record, from_attributes=True)
+            for record in ordered_records
+        ]
+
+
+def update_application(application_id: int, payload: ApplicationUpdate) -> ApplicationRead:
+    with Session(engine) as session:
+        record = session.get(ApplicationRecord, application_id)
+        if record is None:
+            raise ApplicationNotFoundError(str(application_id))
+        for field, value in payload.model_dump(exclude_unset=True).items():
+            setattr(record, field, value)
+        session.add(record)
+        session.commit()
+        session.refresh(record)
+        return ApplicationRead.model_validate(record, from_attributes=True)
+
+
+def delete_application(application_id: int) -> None:
+    with Session(engine) as session:
+        record = session.get(ApplicationRecord, application_id)
+        if record is None:
+            raise ApplicationNotFoundError(str(application_id))
+        session.delete(record)
+        session.commit()

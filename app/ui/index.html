@@ -1,81 +1,35 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Create evidence-grounded job application claims with human approval." />
-  <title>JobPilot — Evidence-first application copilot</title>
+  <meta name="description" content="Create evidence-grounded job application materials with human approval." />
+  <title>JobPilot &mdash; Evidence-first application copilot</title>
   <link rel="stylesheet" href="/static/styles.css" />
   <script src="/static/app.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/" aria-label="JobPilot home"><span class="brand-mark">JP</span><span><strong>JobPilot</strong><small>Evidence-first application copilot</small></span></a>
-    <nav><a href="#workflow">Workspace</a><a href="/docs">API</a><input class="access-token" id="access-token" type="password" placeholder="Optional access token" aria-label="Access token" /><span class="status-pill" id="api-status"><span class="status-dot"></span>Checking API</span></nav>
+    <nav><a href="#workflow">Workspace</a><a href="#applications">Pipeline</a><a href="/docs">API</a><input class="access-token" id="access-token" type="password" placeholder="Optional access token" aria-label="Access token" /><span class="status-pill" id="api-status"><span class="status-dot"></span>Checking API</span></nav>
   </header>
-
   <main>
     <section class="hero">
-      <div class="hero-copy-block">
-        <p class="eyebrow"><span></span>Grounded by design</p>
-        <h1>Every strong claim starts with <em>evidence.</em></h1>
-        <p class="hero-copy">Turn resumes, project notes, and role requirements into traceable application claims. JobPilot flags weak support and waits for your approval before export.</p>
-        <div class="hero-actions"><a class="primary-link" href="#workflow">Start a review <span>→</span></a><a class="text-link" href="/docs">Explore the API ↗</a></div>
-      </div>
-      <div class="proof-card" aria-label="Example evidence chain">
-        <div class="proof-top"><span>Evidence chain</span><span class="live-dot">Validated</span></div>
-        <div class="proof-source"><span class="file-icon">MD</span><div><small>SOURCE 01</small><strong>project-notes.md</strong></div></div>
-        <div class="connector"></div>
-        <blockquote>“Built FastAPI endpoints with typed Pydantic validation.”</blockquote>
-        <div class="proof-result"><span>✓</span><div><small>EXPORTABLE CLAIM</small><strong>Built typed Python APIs with FastAPI.</strong></div></div>
-      </div>
+      <div class="hero-copy-block"><p class="eyebrow"><span></span>Grounded by design</p><h1>Every strong claim starts with <em>evidence.</em></h1><p class="hero-copy">Turn resumes, project notes, and role requirements into traceable application materials. JobPilot flags weak support and waits for approval before export.</p><div class="hero-actions"><a class="primary-link" href="#workflow">Start a review <span>&rarr;</span></a><a class="text-link" href="/docs">Explore the API &nearr;</a></div></div>
+      <div class="proof-card" aria-label="Example evidence chain"><div class="proof-top"><span>Evidence chain</span><span class="live-dot">Validated</span></div><div class="proof-source"><span class="file-icon">MD</span><div><small>SOURCE 01</small><strong>project-notes.md</strong></div></div><div class="connector"></div><blockquote>&ldquo;Built FastAPI endpoints with typed Pydantic validation.&rdquo;</blockquote><div class="proof-result"><span>&check;</span><div><small>EXPORTABLE CLAIM</small><strong>Built typed Python APIs with FastAPI.</strong></div></div></div>
     </section>
+    <section class="principles" aria-label="Product principles"><article><span>01</span><div><strong>Traceable</strong><p>Every exported statement links back to its source.</p></div></article><article><span>02</span><div><strong>Private by default</strong><p>Uploads are parsed in memory and not stored as files.</p></div></article><article><span>03</span><div><strong>Human controlled</strong><p>Nothing becomes exportable before explicit approval.</p></div></article></section>
 
-    <section class="principles" aria-label="Product principles">
-      <article><span>01</span><div><strong>Traceable</strong><p>Every exported statement links back to its source.</p></div></article>
-      <article><span>02</span><div><strong>Private by default</strong><p>Uploads are parsed in memory and not stored as files.</p></div></article>
-      <article><span>03</span><div><strong>Human controlled</strong><p>Nothing becomes exportable before explicit approval.</p></div></article>
-    </section>
-
-    <section class="section-intro" id="workflow"><p class="eyebrow"><span></span>Review workspace</p><h2>From source material to audited output.</h2><p>Add a role, attach your evidence, and inspect each proposed claim.</p></section>
-
+    <section class="section-intro" id="workflow"><p class="eyebrow"><span></span>Review workspace</p><h2>From source material to audited output.</h2><p>Add a role, attach your evidence, and inspect every proposed claim.</p></section>
     <section class="workspace">
-      <form class="panel input-panel" id="workflow-form">
-        <div class="panel-heading"><div><p class="step-label">Step 01</p><h3>Role & evidence</h3></div><select id="language" aria-label="Output language"><option value="en">English</option><option value="zh">中文</option></select></div>
-        <label for="job-description">Job description</label>
-        <textarea id="job-description" rows="8" minlength="20" required placeholder="Paste the role responsibilities and requirements…"></textarea>
-
-        <div class="divider"><span>Evidence sources</span></div>
-        <div class="drop-zone" id="drop-zone">
-          <input class="visually-hidden" id="evidence-files" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown" />
-          <span class="upload-icon">↑</span><strong>Drop files here or <label for="evidence-files">browse</label></strong><small>PDF, DOCX, TXT, or Markdown · up to 5 files · 5 MB each</small>
-          <div class="file-list" id="file-list"></div>
-        </div>
-        <div class="or"><span>or paste evidence</span></div>
-        <div class="field-row"><div><label for="source-id">Source ID</label><input id="source-id" value="project" required /></div><div><label for="source-path">Source path</label><input id="source-path" value="project-notes.md" required /></div></div>
-        <label for="evidence-content">Resume or project evidence</label>
-        <textarea id="evidence-content" rows="7" placeholder="Paste factual resume bullets or project notes…"></textarea>
-        <p class="privacy-note"><span>◆</span>Use only material you are permitted to process. External actions remain disabled.</p>
-        <button class="primary-button" type="submit" id="start-button">Build evidence map <span>→</span></button>
-      </form>
-
-      <section class="panel review-panel" aria-live="polite">
-        <div class="panel-heading"><div><p class="step-label">Step 02</p><h3>Claim review</h3></div><span class="run-status idle" id="run-status">Not started</span></div>
-        <div class="empty-state" id="empty-state"><div class="empty-visual"><span></span><span></span><span></span></div><h4>Your review queue is ready for input</h4><p>Submit a role and at least one evidence source. Every proposed claim will appear here with its supporting source IDs.</p></div>
-        <div class="review-content hidden" id="review-content">
-          <div class="summary-row"><div><span>Thread</span><code id="thread-id">—</code></div><div><span>Usage</span><strong id="token-usage">Local mode</strong></div></div>
-          <div class="claim-list" id="claim-list"></div><div class="generated-materials hidden" id="generated-materials"><h4>Application summary</h4><p id="application-summary"></p><h4>Cover letter</h4><pre id="cover-letter"></pre></div>
-          <div class="blocked-section hidden" id="blocked-section"><h4>Needs revision</h4><div id="blocked-list"></div></div>
-          <div class="decision-bar" id="decision-bar"><button class="secondary-button reject" id="reject-button" type="button">Reject</button><button class="primary-button approve" id="approve-button" type="button">Approve claims <span>✓</span></button></div>
-          <a class="download-button hidden" id="download-button" href="#">Download audited DOCX <span>↓</span></a>
-        </div>
-        <div class="error-message hidden" id="error-message" role="alert"></div>
-      </section>
+      <form class="panel input-panel" id="workflow-form"><div class="panel-heading"><div><p class="step-label">Step 01</p><h3>Role &amp; evidence</h3></div><select id="language" aria-label="Output language"><option value="en">English</option><option value="zh">&#20013;&#25991;</option></select></div><label for="job-description">Job description</label><textarea id="job-description" rows="8" minlength="20" required placeholder="Paste the role responsibilities and requirements..."></textarea><div class="divider"><span>Evidence sources</span></div><div class="drop-zone" id="drop-zone"><input class="visually-hidden" id="evidence-files" type="file" multiple accept=".pdf,.docx,.txt,.md,.markdown" /><span class="upload-icon">&uarr;</span><strong>Drop files here or <label for="evidence-files">browse</label></strong><small>PDF, DOCX, TXT, or Markdown &middot; up to 5 files &middot; 5 MB each</small><div class="file-list" id="file-list"></div></div><div class="or"><span>or paste evidence</span></div><div class="field-row"><div><label for="source-id">Source ID</label><input id="source-id" value="project" required /></div><div><label for="source-path">Source path</label><input id="source-path" value="project-notes.md" required /></div></div><label for="evidence-content">Resume or project evidence</label><textarea id="evidence-content" rows="7" placeholder="Paste factual resume bullets or project notes..."></textarea><p class="privacy-note"><span>&diams;</span>Use only material you are permitted to process. External actions remain disabled.</p><button class="primary-button" type="submit" id="start-button">Build evidence map <span>&rarr;</span></button></form>
+      <section class="panel review-panel" aria-live="polite"><div class="panel-heading"><div><p class="step-label">Step 02</p><h3>Claim review</h3></div><span class="run-status idle" id="run-status">Not started</span></div><div class="empty-state" id="empty-state"><div class="empty-visual"><span></span><span></span><span></span></div><h4>Your review queue is ready for input</h4><p>Submit a role and at least one evidence source. Every claim will appear with its supporting source IDs.</p></div><div class="review-content hidden" id="review-content"><div class="summary-row"><div><span>Thread</span><code id="thread-id">&mdash;</code></div><div><span>Usage</span><strong id="token-usage">Local mode</strong></div></div><div class="claim-list" id="claim-list"></div><div class="generated-materials hidden" id="generated-materials"><h4>Application summary</h4><p id="application-summary"></p><h4>Cover letter</h4><pre id="cover-letter"></pre></div><div class="blocked-section hidden" id="blocked-section"><h4>Needs revision</h4><div id="blocked-list"></div></div><div class="decision-bar" id="decision-bar"><button class="secondary-button reject" id="reject-button" type="button">Reject</button><button class="primary-button approve" id="approve-button" type="button">Approve claims <span>&check;</span></button></div><a class="download-button hidden" id="download-button" href="#">Download audited DOCX <span>&darr;</span></a></div><div class="error-message hidden" id="error-message" role="alert"></div></section>
     </section>
-    <section class="history-section" id="history">
-      <div class="history-heading"><div><p class="eyebrow"><span></span>Saved locally</p><h2>Recent workflows</h2></div><p>Open, clone, or remove resumable review sessions stored in the local checkpoint database.</p></div>
-      <div class="history-list" id="history-list"><p class="history-empty">Loading workflows...</p></div>
-    </section>  </main>
+
+    <section class="history-section" id="history"><div class="history-heading"><div><p class="eyebrow"><span></span>Saved locally</p><h2>Recent workflows</h2></div><p>Open, clone, archive, or remove resumable review sessions stored in the local checkpoint database.</p></div><div class="history-list" id="history-list"><p class="history-empty">Loading workflows...</p></div></section>
+
+    <section class="applications-section" id="applications"><div class="history-heading"><div><p class="eyebrow"><span></span>Application tracker</p><h2>Keep the search moving.</h2></div><p>Track companies, roles, deadlines, and the next concrete action from one local dashboard.</p></div><form class="application-form panel" id="application-form"><input id="application-company" required placeholder="Company" /><input id="application-role" required placeholder="Role" /><select id="application-status"><option value="draft">Draft</option><option value="applied">Applied</option><option value="interview">Interview</option><option value="offer">Offer</option><option value="closed">Closed</option></select><input id="application-next-action" placeholder="Next action" /><input id="application-due-date" type="date" /><button class="primary-button" type="submit">Add application</button></form><div class="application-filters" id="application-filters"><button class="active" data-status="">All</button><button data-status="draft">Draft</button><button data-status="applied">Applied</button><button data-status="interview">Interview</button><button data-status="offer">Offer</button><button data-status="closed">Closed</button></div><div class="application-board" id="application-board"><p class="history-empty">Loading applications...</p></div></section>
+  </main>
   <footer><a class="brand footer-brand" href="/"><span class="brand-mark">JP</span><strong>JobPilot</strong></a><p>Evidence before eloquence.</p><span>Local-first &middot; Human-approved</span></footer>
 </body>
 </html>

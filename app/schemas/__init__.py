@@ -1,6 +1,7 @@
 from app.schemas.models import (
     ApplicationCreate,
     ApplicationRead,
+    ApplicationUpdate,
     Claim,
     Evidence,
     EvidenceDocument,
@@ -14,6 +15,7 @@ from app.schemas.models import (
 __all__ = [
     "ApplicationCreate",
     "ApplicationRead",
+    "ApplicationUpdate",
     "Claim",
     "Evidence",
     "EvidenceDocument",

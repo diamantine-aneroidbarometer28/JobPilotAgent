@@ -22,6 +22,9 @@ const accessToken = document.querySelector("#access-token");
 const generatedMaterials = document.querySelector("#generated-materials");
 const applicationSummary = document.querySelector("#application-summary");
 const coverLetter = document.querySelector("#cover-letter");
+const applicationForm = document.querySelector("#application-form");
+const applicationBoard = document.querySelector("#application-board");
+const applicationFilters = document.querySelector("#application-filters");
 let activeThreadId = null;
 let activeClaims = [];
 let uploadedDocuments = [];
@@ -119,3 +122,73 @@ async function submitDecision(approved) {
 approveButton.addEventListener("click", () => submitDecision(true)); rejectButton.addEventListener("click", () => submitDecision(false));
 fetch("/health").then((response) => { if (!response.ok) throw new Error(); apiStatus.classList.add("online"); apiStatus.lastChild.textContent = " API online"; }).catch(() => { apiStatus.lastChild.textContent = " API unavailable"; });
 loadHistory();
+
+async function loadApplications(status = "") {
+  try {
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    const applications = await jsonRequest(`/v1/applications${query}`);
+    applicationBoard.innerHTML = applications.length
+      ? applications.map((item) => `<article class="application-card" data-id="${item.id}"><div class="application-card-top"><span class="application-status ${escapeHtml(item.status)}">${escapeHtml(item.status)}</span><button class="danger-link" data-action="delete-application">Delete</button></div><h3>${escapeHtml(item.role)}</h3><strong>${escapeHtml(item.company)}</strong><label>Next action<input data-field="next_action" value="${escapeHtml(item.next_action || "")}" placeholder="Define the next step" /></label><div class="application-card-row"><select data-field="status"><option value="draft" ${item.status === "draft" ? "selected" : ""}>Draft</option><option value="applied" ${item.status === "applied" ? "selected" : ""}>Applied</option><option value="interview" ${item.status === "interview" ? "selected" : ""}>Interview</option><option value="offer" ${item.status === "offer" ? "selected" : ""}>Offer</option><option value="closed" ${item.status === "closed" ? "selected" : ""}>Closed</option></select><input data-field="due_date" type="date" value="${item.due_date || ""}" /></div><div class="application-card-actions"><button data-action="start-tailoring">Tailor materials</button><button data-action="save-application">Save</button></div></article>`).join("")
+      : '<p class="history-empty">No applications in this view.</p>';
+  } catch (error) {
+    applicationBoard.innerHTML = `<p class="history-empty">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+applicationForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    company: document.querySelector("#application-company").value.trim(),
+    role: document.querySelector("#application-role").value.trim(),
+    status: document.querySelector("#application-status").value,
+    next_action: document.querySelector("#application-next-action").value.trim() || null,
+    due_date: document.querySelector("#application-due-date").value || null,
+  };
+  try {
+    await jsonRequest("/v1/applications", { method: "POST", body: JSON.stringify(payload) });
+    applicationForm.reset();
+    await loadApplications();
+  } catch (error) { showError(error.message); }
+});
+
+applicationFilters.addEventListener("click", async (event) => {
+  const button = event.target.closest("button"); if (!button) return;
+  applicationFilters.querySelectorAll("button").forEach((item) => item.classList.remove("active"));
+  button.classList.add("active");
+  await loadApplications(button.dataset.status || "");
+});
+
+applicationBoard.addEventListener("click", async (event) => {
+  const button = event.target.closest("button"); if (!button) return;
+  const card = button.closest(".application-card");
+  const id = card.dataset.id;
+  try {
+    if (button.dataset.action === "delete-application") {
+      await jsonRequest(`/v1/applications/${id}`, { method: "DELETE" });
+      card.remove();
+    } else if (button.dataset.action === "save-application") {
+      const payload = {};
+      card.querySelectorAll("[data-field]").forEach((field) => { payload[field.dataset.field] = field.value || null; });
+      await jsonRequest(`/v1/applications/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      await loadApplications(applicationFilters.querySelector(".active").dataset.status || "");
+    } else if (button.dataset.action === "start-tailoring") {
+      document.querySelector("#job-description").focus();
+      document.querySelector("#workflow").scrollIntoView();
+    }
+  } catch (error) { showError(error.message); }
+});
+
+downloadButton.addEventListener("click", async (event) => {
+  if (!activeThreadId || !accessToken.value) return;
+  event.preventDefault();
+  try {
+    const response = await fetch(`/v1/workflows/${activeThreadId}/export`, { headers: authHeaders() });
+    if (!response.ok) throw new Error("Export download failed.");
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url; link.download = `jobpilot-${activeThreadId}.docx`; link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) { showError(error.message); }
+});
+
+loadApplications();

@@ -1,9 +1,38 @@
 # JobPilot Agent
 
+[![Quality](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml/badge.svg)](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml) ![Python](https://img.shields.io/badge/Python-3.11-3776AB) ![Version](https://img.shields.io/badge/version-0.7.0-176847)
+
 An evidence-grounded job application copilot that parses job descriptions, retrieves evidence from personal project materials, drafts traceable resume claims, and tracks applications.
 
-> Current status: v0.6.0 provides resumable evidence-grounded workflows, direct document upload, editable claims with server-side revalidation, archived workflow history, evidence-constrained application summaries and cover letters, audited DOCX export, optional access protection, controlled benchmarks, and production packaging. It remains usable without a model API key.
+> Current status: v0.7.0 is a portfolio-ready local application copilot with evidence-grounded material generation, human approval, audited DOCX export, resumable workflow history, and a complete application tracking board. It remains usable without a model API key.
 
+## Portfolio highlights
+
+JobPilot demonstrates an end-to-end applied AI system rather than a prompt wrapper:
+
+- explicit Pydantic contracts connect ingestion, retrieval, generation, validation, API responses, checkpoints, and exports;
+- LangGraph interrupts and SQLite checkpoints preserve human approval across process restarts;
+- model-produced claims are revalidated locally for evidence IDs, lexical support, and numerical metrics;
+- PDF/DOCX uploads are bounded, parsed in memory, path-sanitized, and never committed to the repository;
+- editable claims cannot be approved unless the edited text still passes deterministic evidence validation;
+- the FastAPI service, responsive interface, application tracker, offline evaluations, CI, and package build form one testable vertical slice.
+
+### 90-second demo
+
+1. Start the server and open `http://127.0.0.1:8000/`.
+2. Paste a job description and upload or paste privacy-scrubbed project evidence.
+3. Build the evidence map, inspect source IDs, and edit one proposed claim.
+4. Attempt an unsupported edit to show server-side rejection, then approve a supported version.
+5. Review the generated application summary and cover letter, then download the audited DOCX.
+6. Reopen, clone, or archive the workflow and add the role to the application pipeline.
+
+### Engineering discussion points
+
+- Why deterministic post-generation validation is still required after structured model output.
+- Why workflow persistence belongs below the UI approval layer.
+- How local-first operation reduces privacy and deployment complexity.
+- Where controlled fixtures are useful and where real-material evaluation is still required.
+- Why single-process rate limiting and a shared token are bounded private-deployment controls, not multi-tenant security.
 ## Why JobPilot
 
 Job seekers repeatedly analyze job descriptions, identify skill gaps, locate project evidence, tailor resumes, write outreach, and track applications. Using a general-purpose language model directly can produce unsupported experience or invented metrics.
@@ -146,6 +175,10 @@ The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
 - `DELETE /v1/workflows/{thread_id}` removes its checkpoints and generated export.
 - `POST /v1/workflows/{thread_id}/decision` revalidates optional claim edits, then resumes with an approve or reject decision.
 - `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
+- `POST /v1/applications` creates a tracked application.
+- `GET /v1/applications?status=interview` lists and filters the pipeline.
+- `PATCH /v1/applications/{id}` updates status, due date, and next action.
+- `DELETE /v1/applications/{id}` removes a tracked application.
 
 Without `OPENAI_API_KEY`, the API uses deterministic drafting. With a key configured, it enables the structured Responses writer while preserving local validation and human approval.
 
@@ -223,6 +256,14 @@ uv run python -m evals.benchmark_workflow --runs 5
 
 These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
+### Milestone 7: Portfolio and job-search readiness — complete
+
+- Added a responsive application pipeline with create, filter, update, and delete operations.
+- Added draft, applied, interview, offer, and closed status views with due dates and next actions.
+- Fixed the previously untested SQLModel-to-Pydantic response conversion path.
+- Rebuilt the HTML template with encoding-safe entities and added a regression assertion for historical mojibake.
+- Added token-aware authenticated DOCX downloads from the browser.
+- Added recruiter-oriented project highlights, a 90-second demo, and engineering discussion points.
 ### Milestone 6: Complete materials, archival, and private access — complete
 
 - Added evidence-constrained application summaries and cover letters generated only from approved claims.
@@ -303,7 +344,7 @@ This journal records engineering decisions that materially changed the project. 
 | OpenAI Python | `>=2.20,<3` | Supports parsed structured Responses output used by the optional writer. |
 | pypdf / python-docx | `>=6.6,<7` / `>=1.2,<2` | Current document parsing APIs with bounded major versions. |
 | python-multipart | resolved to `0.0.32` | Required by FastAPI multipart uploads and locked by `uv.lock`. |
-| Project release | `0.6.0` | Aligns package and API versions after archival, complete materials, and optional private-access controls. |
+| Project release | `0.7.0` | Portfolio-ready release with the application pipeline, encoding-safe UI, and complete job-search demo flow. |
 
 ### Problems encountered and how to reproduce the checks
 

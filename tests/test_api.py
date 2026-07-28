@@ -64,3 +64,38 @@ def test_optional_rate_limit_returns_429(monkeypatch: object) -> None:
     assert first.status_code == 200
     assert limited.status_code == 429
     assert limited.headers["retry-after"] == "60"
+
+
+def test_application_crud_and_status_filter() -> None:
+    with TestClient(app) as client:
+        created = client.post(
+            "/v1/applications",
+            json={
+                "company": "Portfolio Test Company",
+                "role": "Backend Engineer",
+                "status": "draft",
+                "next_action": "Tailor materials",
+            },
+        )
+        assert created.status_code == 201
+        application_id = created.json()["id"]
+
+        updated = client.patch(
+            f"/v1/applications/{application_id}",
+            json={"status": "interview", "next_action": "Prepare system design"},
+        )
+        assert updated.status_code == 200
+        assert updated.json()["status"] == "interview"
+
+        filtered = client.get("/v1/applications?status=interview")
+        assert any(item["id"] == application_id for item in filtered.json())
+
+        deleted = client.delete(f"/v1/applications/{application_id}")
+        assert deleted.status_code == 204
+        assert (
+            client.patch(
+                f"/v1/applications/{application_id}",
+                json={"status": "closed"},
+            ).status_code
+            == 404
+        )

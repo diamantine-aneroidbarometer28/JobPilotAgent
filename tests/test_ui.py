@@ -20,6 +20,10 @@ def test_ui_and_static_assets_are_served() -> None:
     assert "claim-editor" in script.text
     assert "generated-materials" in page.text
     assert 'data-action="archive"' in script.text
+    assert "Application tracker" in page.text
+    assert "application-board" in page.text
+    assert "/v1/applications" in script.text
+    assert "鈥" not in page.text
 
 
 def test_document_upload_returns_evidence_document() -> None:

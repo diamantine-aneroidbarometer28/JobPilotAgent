@@ -18,13 +18,21 @@ from app.api.workflow_routes import router as workflow_router
 from app.schemas import (
     ApplicationCreate,
     ApplicationRead,
+    ApplicationUpdate,
     EvidenceDocument,
     TailoringRequest,
     TailoringResult,
 )
 from app.services.ingestion import UnsupportedDocumentError, load_uploaded_document
 from app.services.tailoring import tailor
-from app.storage.database import create_application, create_db_and_tables, list_applications
+from app.storage.database import (
+    ApplicationNotFoundError,
+    create_application,
+    create_db_and_tables,
+    delete_application,
+    list_applications,
+    update_application,
+)
 
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 LOGGER = logging.getLogger("jobpilot.api")
@@ -50,7 +58,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="JobPilot Agent",
-    version="0.6.0",
+    version="0.7.0",
     description="Evidence-grounded job application copilot",
     lifespan=lifespan,
 )
@@ -154,5 +162,22 @@ def add_application(request: ApplicationCreate) -> ApplicationRead:
 
 
 @app.get("/v1/applications", response_model=list[ApplicationRead])
-def get_applications() -> list[ApplicationRead]:
-    return list_applications()
+def get_applications(status: str | None = None) -> list[ApplicationRead]:
+    return list_applications(status=status)
+
+
+@app.patch("/v1/applications/{application_id}", response_model=ApplicationRead)
+def edit_application(application_id: int, request: ApplicationUpdate) -> ApplicationRead:
+    try:
+        return update_application(application_id, request)
+    except ApplicationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Application not found.") from error
+
+
+@app.delete("/v1/applications/{application_id}", status_code=204)
+def remove_application(application_id: int) -> Response:
+    try:
+        delete_application(application_id)
+    except ApplicationNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Application not found.") from error
+    return Response(status_code=204)

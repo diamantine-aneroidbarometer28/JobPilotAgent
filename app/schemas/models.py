@@ -85,6 +85,14 @@ class ApplicationCreate(BaseModel):
     due_date: date | None = None
 
 
+class ApplicationUpdate(BaseModel):
+    company: str | None = Field(default=None, min_length=1)
+    role: str | None = Field(default=None, min_length=1)
+    status: str | None = Field(default=None, min_length=1)
+    next_action: str | None = None
+    due_date: date | None = None
+
+
 class ApplicationRead(ApplicationCreate):
     id: int
     created_at: datetime
