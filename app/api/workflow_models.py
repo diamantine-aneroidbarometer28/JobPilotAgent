@@ -15,6 +15,10 @@ class EditableClaim(BaseModel):
     evidence_ids: list[str] = Field(min_length=1)
 
 
+class WorkflowArchive(BaseModel):
+    archived: bool = True
+
+
 class WorkflowDecision(BaseModel):
     approved: bool
     claims: list[EditableClaim] | None = None
@@ -23,6 +27,7 @@ class WorkflowDecision(BaseModel):
 class WorkflowRunResponse(BaseModel):
     thread_id: UUID
     status: str
+    archived: bool = False
     claims: list[dict[str, Any]] = Field(default_factory=list)
     blocked_claims: list[dict[str, Any]] = Field(default_factory=list)
     token_usage: dict[str, Any] | None = None

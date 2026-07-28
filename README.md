@@ -2,7 +2,7 @@
 
 An evidence-grounded job application copilot that parses job descriptions, retrieves evidence from personal project materials, drafts traceable resume claims, and tracks applications.
 
-> Current status: v0.5.0 provides resumable evidence-grounded workflows, direct document upload, editable claims with server-side revalidation, local workflow history, controlled benchmarks, audited DOCX export, and production packaging. It remains usable without a model API key.
+> Current status: v0.6.0 provides resumable evidence-grounded workflows, direct document upload, editable claims with server-side revalidation, archived workflow history, evidence-constrained application summaries and cover letters, audited DOCX export, optional access protection, controlled benchmarks, and production packaging. It remains usable without a model API key.
 
 ## Why JobPilot
 
@@ -139,9 +139,10 @@ The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
 
 - `POST /v1/workflows` starts a run and pauses for claim review.
 - `POST /v1/documents/upload` extracts evidence from up to five PDF, DOCX, TXT, or Markdown files without persisting the uploads.
-- `GET /v1/workflows` lists recent resumable workflows.
+- `GET /v1/workflows` lists active resumable workflows; use `include_archived=true` to include archived runs.
 - `GET /v1/workflows/{thread_id}` returns saved state and review payloads.
 - `POST /v1/workflows/{thread_id}/clone` creates a fresh run from the saved request.
+- `POST /v1/workflows/{thread_id}/archive` archives or restores a workflow without deleting its checkpoints.
 - `DELETE /v1/workflows/{thread_id}` removes its checkpoints and generated export.
 - `POST /v1/workflows/{thread_id}/decision` revalidates optional claim edits, then resumes with an approve or reject decision.
 - `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
@@ -222,6 +223,23 @@ uv run python -m evals.benchmark_workflow --runs 5
 
 These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
+### Milestone 6: Complete materials, archival, and private access — complete
+
+- Added evidence-constrained application summaries and cover letters generated only from approved claims.
+- Added summary and cover-letter sections to both the browser review and audited DOCX export.
+- Added persistent archive/restore state in SQLite; active history hides archived workflows by default.
+- Added optional `JOBPILOT_ACCESS_TOKEN` protection for `/v1/*` endpoints. The browser stores the entered token in session storage only.
+- Added optional `JOBPILOT_RATE_LIMIT_PER_MINUTE` single-process rate limiting with `429` and `Retry-After` responses.
+
+Example private-local configuration:
+
+```powershell
+$env:JOBPILOT_ACCESS_TOKEN = "replace-with-a-long-random-value"
+$env:JOBPILOT_RATE_LIMIT_PER_MINUTE = "60"
+uv run uvicorn app.api.main:app --host 127.0.0.1 --port 8000
+```
+
+The built-in limiter is intentionally small and process-local. Multi-worker or internet-facing deployments must enforce distributed rate limits and authentication at the reverse proxy or gateway. The access token protects API routes but is not a multi-user account system.
 ### Milestone 5: Product hardening and operations — baseline complete
 
 - Added editable claim review; every edit is revalidated against its cited evidence before approval.
@@ -285,7 +303,7 @@ This journal records engineering decisions that materially changed the project. 
 | OpenAI Python | `>=2.20,<3` | Supports parsed structured Responses output used by the optional writer. |
 | pypdf / python-docx | `>=6.6,<7` / `>=1.2,<2` | Current document parsing APIs with bounded major versions. |
 | python-multipart | resolved to `0.0.32` | Required by FastAPI multipart uploads and locked by `uv.lock`. |
-| Project release | `0.5.0` | Aligns package and API versions after workflow management, safety, benchmarks, CI, and deployment work. |
+| Project release | `0.6.0` | Aligns package and API versions after archival, complete materials, and optional private-access controls. |
 
 ### Problems encountered and how to reproduce the checks
 
@@ -295,6 +313,8 @@ This journal records engineering decisions that materially changed the project. 
 - **Optional document imports:** if PDF or DOCX support is unavailable, run `uv sync --extra documents`. The core deterministic text workflow remains independently testable.
 - **Known test warning:** the current Starlette/FastAPI `TestClient` stack reports an upstream `httpx` deprecation warning. It is monitored rather than suppressed; the dependency range will be changed after the supported migration path is stable.
 - **No API key:** leave `OPENAI_API_KEY` unset to use deterministic drafting. This is a supported mode, not a degraded test workaround.
+- **Access protection:** set `JOBPILOT_ACCESS_TOKEN` for trusted private use. This is a single-token control, not user authentication or authorization.
+- **Rate limiting:** set `JOBPILOT_RATE_LIMIT_PER_MINUTE` to a positive integer for a single-process guard; use gateway-level limits for multiple workers.
 - **Docker verification:** Docker and Compose files are included, but the development Windows environment did not have the Docker CLI installed. The Python package build was verified locally; run `docker compose build` on a Docker-enabled host before production deployment.
 
 Run the engineering gates after environment or dependency changes:

@@ -28,6 +28,8 @@ def test_workflow_interrupts_and_resumes_after_approval() -> None:
     completed = graph.invoke(Command(resume={"approved": True}), config=config)
     assert completed["approval_status"] == "approved"
     assert completed["result"]["claims"]
+    assert "Evidence-supported experience" in completed["result"]["application_summary"]
+    assert "Dear Hiring Team" in completed["result"]["cover_letter"]
 
 
 def test_workflow_rejection_removes_exportable_claims() -> None:
@@ -39,3 +41,5 @@ def test_workflow_rejection_removes_exportable_claims() -> None:
 
     assert completed["approval_status"] == "rejected"
     assert completed["result"]["claims"] == []
+    assert completed["result"]["application_summary"] is None
+    assert completed["result"]["cover_letter"] is None

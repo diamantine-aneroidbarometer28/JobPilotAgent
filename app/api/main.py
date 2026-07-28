@@ -1,13 +1,16 @@
 import logging
 import os
+import secrets
 import time
+from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from threading import Lock
 from typing import Annotated
 
 from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.workflow_manager import WorkflowManager
@@ -25,6 +28,8 @@ from app.storage.database import create_application, create_db_and_tables, list_
 
 UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 LOGGER = logging.getLogger("jobpilot.api")
+RATE_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
+RATE_LOCK = Lock()
 MAX_UPLOAD_FILES = 5
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
@@ -45,7 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="JobPilot Agent",
-    version="0.5.0",
+    version="0.6.0",
     description="Evidence-grounded job application copilot",
     lifespan=lifespan,
 )
@@ -57,6 +62,26 @@ async def operational_middleware(
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     started = time.perf_counter()
+    if request.url.path.startswith("/v1/"):
+        expected_token = os.getenv("JOBPILOT_ACCESS_TOKEN", "")
+        supplied_token = request.headers.get("X-JobPilot-Token", "")
+        if expected_token and not secrets.compare_digest(expected_token, supplied_token):
+            return JSONResponse(status_code=401, content={"detail": "Invalid access token."})
+        rate_limit = int(os.getenv("JOBPILOT_RATE_LIMIT_PER_MINUTE", "0"))
+        if rate_limit > 0:
+            client_key = request.client.host if request.client else "unknown"
+            now = time.monotonic()
+            with RATE_LOCK:
+                bucket = RATE_BUCKETS[client_key]
+                while bucket and bucket[0] <= now - 60:
+                    bucket.popleft()
+                if len(bucket) >= rate_limit:
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Rate limit exceeded."},
+                        headers={"Retry-After": "60"},
+                    )
+                bucket.append(now)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

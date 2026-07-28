@@ -73,6 +73,8 @@ class TailoringResult(BaseModel):
     evidence_map: list[EvidenceMap]
     claims: list[Claim]
     blocked_claims: list[Claim]
+    application_summary: str | None = None
+    cover_letter: str | None = None
 
 
 class ApplicationCreate(BaseModel):

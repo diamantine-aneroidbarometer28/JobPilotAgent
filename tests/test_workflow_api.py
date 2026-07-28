@@ -144,3 +144,31 @@ def test_unsupported_edit_cannot_be_approved(
 
     assert response.status_code == 409
     assert "lexical overlap" in response.json()["detail"]
+
+
+def test_workflow_can_be_archived_and_restored(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JOBPILOT_CHECKPOINT_DB", str(tmp_path / "workflow.db"))
+    monkeypatch.setenv("JOBPILOT_EXPORT_DIR", str(tmp_path / "exports"))
+
+    with TestClient(app) as client:
+        started = client.post("/v1/workflows", json=_payload()).json()
+        archived = client.post(
+            f"/v1/workflows/{started['thread_id']}/archive",
+            json={"archived": True},
+        )
+        assert archived.status_code == 200
+        assert archived.json()["archived"] is True
+        assert client.get("/v1/workflows").json() == []
+        all_runs = client.get("/v1/workflows?include_archived=true").json()
+        assert all_runs[0]["thread_id"] == started["thread_id"]
+
+        restored = client.post(
+            f"/v1/workflows/{started['thread_id']}/archive",
+            json={"archived": False},
+        )
+
+    assert restored.status_code == 200
+    assert restored.json()["archived"] is False

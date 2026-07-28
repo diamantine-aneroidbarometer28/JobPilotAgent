@@ -5,7 +5,12 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse
 
 from app.api.workflow_manager import WorkflowManager, WorkflowNotFoundError, WorkflowStateError
-from app.api.workflow_models import WorkflowDecision, WorkflowRunResponse, WorkflowStartRequest
+from app.api.workflow_models import (
+    WorkflowArchive,
+    WorkflowDecision,
+    WorkflowRunResponse,
+    WorkflowStartRequest,
+)
 from app.schemas import TailoringRequest
 
 router = APIRouter(prefix="/v1/workflows", tags=["workflows"])
@@ -36,9 +41,14 @@ def start_workflow(payload: WorkflowStartRequest, request: Request) -> WorkflowR
 
 @router.get("", response_model=list[WorkflowRunResponse])
 def list_workflows(
-    request: Request, limit: int = Query(default=50, ge=1, le=100)
+    request: Request,
+    limit: int = Query(default=50, ge=1, le=100),
+    include_archived: bool = False,
 ) -> list[WorkflowRunResponse]:
-    return _manager(request).list_workflows(limit=limit)
+    return _manager(request).list_workflows(
+        limit=limit,
+        include_archived=include_archived,
+    )
 
 
 @router.get("/{thread_id}", response_model=WorkflowRunResponse)
@@ -63,6 +73,18 @@ def decide_workflow(
 def clone_workflow(thread_id: UUID, request: Request) -> WorkflowRunResponse:
     try:
         return _manager(request).clone(thread_id)
+    except WorkflowNotFoundError as error:
+        raise _translate_error(error) from error
+
+
+@router.post("/{thread_id}/archive", response_model=WorkflowRunResponse)
+def archive_workflow(
+    thread_id: UUID,
+    payload: WorkflowArchive,
+    request: Request,
+) -> WorkflowRunResponse:
+    try:
+        return _manager(request).archive(thread_id, archived=payload.archived)
     except WorkflowNotFoundError as error:
         raise _translate_error(error) from error
 

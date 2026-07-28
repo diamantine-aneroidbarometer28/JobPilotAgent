@@ -33,6 +33,8 @@ def _result(status: SupportStatus = SupportStatus.SUPPORTED) -> TailoringResult:
             )
         ],
         blocked_claims=[],
+        application_summary="Evidence-supported experience relevant to this role.",
+        cover_letter="Dear Hiring Team,\n\nI built supported APIs.",
     )
 
 
@@ -48,6 +50,8 @@ def test_docx_export_contains_claim_and_audit_evidence(tmp_path: Path) -> None:
     assert "Built Python APIs with validation." in text
     assert "project#chunk-1" in text
     assert "Source: README.md" in text
+    assert "Application Summary" in text
+    assert "Dear Hiring Team" in text
 
 
 def test_docx_export_rejects_unapproved_claims(tmp_path: Path) -> None:

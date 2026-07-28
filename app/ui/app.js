@@ -1,4 +1,4 @@
-﻿const form = document.querySelector("#workflow-form");
+const form = document.querySelector("#workflow-form");
 const startButton = document.querySelector("#start-button");
 const approveButton = document.querySelector("#approve-button");
 const rejectButton = document.querySelector("#reject-button");
@@ -18,9 +18,16 @@ const evidenceFiles = document.querySelector("#evidence-files");
 const dropZone = document.querySelector("#drop-zone");
 const fileList = document.querySelector("#file-list");
 const historyList = document.querySelector("#history-list");
+const accessToken = document.querySelector("#access-token");
+const generatedMaterials = document.querySelector("#generated-materials");
+const applicationSummary = document.querySelector("#application-summary");
+const coverLetter = document.querySelector("#cover-letter");
 let activeThreadId = null;
 let activeClaims = [];
 let uploadedDocuments = [];
+accessToken.value = sessionStorage.getItem("jobpilot-token") || "";
+accessToken.addEventListener("change", () => { sessionStorage.setItem("jobpilot-token", accessToken.value); loadHistory(); });
+function authHeaders() { return accessToken.value ? { "X-JobPilot-Token": accessToken.value } : {}; }
 
 function setBusy(button, busy, label) {
   button.disabled = busy;
@@ -31,7 +38,7 @@ function showError(message) { errorMessage.textContent = message; errorMessage.c
 function clearError() { errorMessage.classList.add("hidden"); errorMessage.textContent = ""; }
 function escapeHtml(value) { const element = document.createElement("div"); element.textContent = value; return element.innerHTML; }
 async function jsonRequest(url, options = {}) {
-  const response = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
+  const response = await fetch(url, { headers: { "Content-Type": "application/json", ...authHeaders() }, ...options });
   if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.detail || `Request failed with status ${response.status}.`); }
   if (response.status === 204) return null;
   return response.json();
@@ -53,11 +60,16 @@ function renderRun(run) {
   const blocked = run.blocked_claims || []; blockedList.innerHTML = blocked.map((claim) => claimCard(claim, true)).join(""); blockedSection.classList.toggle("hidden", blocked.length === 0);
   decisionBar.classList.toggle("hidden", !pending); downloadButton.classList.toggle("hidden", run.status !== "completed");
   if (run.status === "completed") downloadButton.href = `/v1/workflows/${run.thread_id}/export`;
+  const result = run.result || {};
+  const hasMaterials = Boolean(result.application_summary || result.cover_letter);
+  generatedMaterials.classList.toggle("hidden", !hasMaterials);
+  applicationSummary.textContent = result.application_summary || "";
+  coverLetter.textContent = result.cover_letter || "";
 }
 async function loadHistory() {
   try {
     const runs = await jsonRequest("/v1/workflows?limit=12");
-    historyList.innerHTML = runs.length ? runs.map((run) => `<article class="history-card"><button class="history-open" data-id="${run.thread_id}"><span class="history-status ${run.status}">${escapeHtml(run.status.replaceAll("_", " "))}</span><code>${run.thread_id.slice(0, 8)}</code><small>${run.claims.length} claims</small></button><div><button data-action="clone" data-id="${run.thread_id}">Clone</button><button class="danger-link" data-action="delete" data-id="${run.thread_id}">Delete</button></div></article>`).join("") : '<p class="history-empty">No saved workflows yet.</p>';
+    historyList.innerHTML = runs.length ? runs.map((run) => `<article class="history-card"><button class="history-open" data-id="${run.thread_id}"><span class="history-status ${run.status}">${escapeHtml(run.status.replaceAll("_", " "))}</span><code>${run.thread_id.slice(0, 8)}</code><small>${run.claims.length} claims</small></button><div><button data-action="clone" data-id="${run.thread_id}">Clone</button><button data-action="archive" data-id="${run.thread_id}">Archive</button><button class="danger-link" data-action="delete" data-id="${run.thread_id}">Delete</button></div></article>`).join("") : '<p class="history-empty">No saved workflows yet.</p>';
   } catch (error) { historyList.innerHTML = `<p class="history-empty">${escapeHtml(error.message)}</p>`; }
 }
 historyList.addEventListener("click", async (event) => {
@@ -65,6 +77,7 @@ historyList.addEventListener("click", async (event) => {
   const id = button.dataset.id;
   try {
     if (button.dataset.action === "delete") { await jsonRequest(`/v1/workflows/${id}`, { method: "DELETE" }); if (activeThreadId === id) location.reload(); }
+    else if (button.dataset.action === "archive") await jsonRequest(`/v1/workflows/${id}/archive`, { method: "POST", body: JSON.stringify({ archived: true }) });
     else if (button.dataset.action === "clone") renderRun(await jsonRequest(`/v1/workflows/${id}/clone`, { method: "POST" }));
     else renderRun(await jsonRequest(`/v1/workflows/${id}`));
     await loadHistory(); document.querySelector("#workflow").scrollIntoView();
@@ -76,7 +89,7 @@ async function uploadFiles(files) {
   fileList.innerHTML = `<span class="loading">Reading ${files.length} file${files.length === 1 ? "" : "s"}...</span>`;
   const body = new FormData(); files.forEach((file) => body.append("files", file));
   try {
-    const response = await fetch("/v1/documents/upload", { method: "POST", body });
+    const response = await fetch("/v1/documents/upload", { method: "POST", headers: authHeaders(), body });
     if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.detail || `Upload failed with status ${response.status}.`); }
     uploadedDocuments = await response.json();
     fileList.innerHTML = uploadedDocuments.map((doc) => `<span class="file-chip"><b>OK</b>${escapeHtml(doc.source_path)}</span>`).join(""); dropZone.classList.add("has-files");

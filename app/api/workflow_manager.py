@@ -42,6 +42,11 @@ class WorkflowManager:
         self.export_dir.mkdir(parents=True, exist_ok=True)
         self._connection = sqlite3.connect(self.checkpoint_path, check_same_thread=False)
         self._checkpointer = SqliteSaver(self._connection)
+        self._connection.execute(
+            "CREATE TABLE IF NOT EXISTS workflow_catalog ("
+            "thread_id TEXT PRIMARY KEY, archived INTEGER NOT NULL DEFAULT 0)"
+        )
+        self._connection.commit()
         model_enabled = bool(os.getenv("OPENAI_API_KEY")) if use_model is None else use_model
         writer = EvidenceWriter(OpenAIResponsesBackend()) if model_enabled else None
         self.graph = build_workflow(self._checkpointer, writer=writer)
@@ -64,6 +69,11 @@ class WorkflowManager:
                 raise WorkflowStateError(f"Workflow already exists: {workflow_id}")
             initial_state: JobPilotState = {"request": request.model_dump(mode="json")}
             output = self.graph.invoke(initial_state, config=self._config(workflow_id))
+            self._connection.execute(
+                "INSERT OR REPLACE INTO workflow_catalog(thread_id, archived) VALUES (?, 0)",
+                (str(workflow_id),),
+            )
+            self._connection.commit()
         return self._response(workflow_id, output)
 
     def get(self, thread_id: UUID) -> WorkflowRunResponse:
@@ -80,7 +90,9 @@ class WorkflowManager:
         ]
         return self._response(thread_id, values, review=review)
 
-    def list_workflows(self, *, limit: int = 50) -> list[WorkflowRunResponse]:
+    def list_workflows(
+        self, *, limit: int = 50, include_archived: bool = False
+    ) -> list[WorkflowRunResponse]:
         thread_ids: list[UUID] = []
         seen: set[str] = set()
         with self._lock:
@@ -92,7 +104,8 @@ class WorkflowManager:
                     thread_ids.append(UUID(raw_id))
                     if len(thread_ids) >= limit:
                         break
-        return [self.get(thread_id) for thread_id in thread_ids]
+        workflows = [self.get(thread_id) for thread_id in thread_ids]
+        return workflows if include_archived else [item for item in workflows if not item.archived]
 
     def decide(
         self, thread_id: UUID, *, approved: bool, claims: list[EditableClaim] | None = None
@@ -143,10 +156,31 @@ class WorkflowManager:
         request = TailoringRequest.model_validate(snapshot.values["request"])
         return self.start(request)
 
+    def archive(self, thread_id: UUID, *, archived: bool = True) -> WorkflowRunResponse:
+        self.get(thread_id)
+        with self._lock:
+            self._connection.execute(
+                "INSERT OR REPLACE INTO workflow_catalog(thread_id, archived) VALUES (?, ?)",
+                (str(thread_id), int(archived)),
+            )
+            self._connection.commit()
+        return self.get(thread_id)
+
+    def _is_archived(self, thread_id: UUID) -> bool:
+        row = self._connection.execute(
+            "SELECT archived FROM workflow_catalog WHERE thread_id = ?",
+            (str(thread_id),),
+        ).fetchone()
+        return bool(row[0]) if row else False
+
     def delete(self, thread_id: UUID) -> None:
         self.get(thread_id)
         with self._lock:
             self._checkpointer.delete_thread(str(thread_id))
+            self._connection.execute(
+                "DELETE FROM workflow_catalog WHERE thread_id = ?", (str(thread_id),)
+            )
+            self._connection.commit()
         export_path = self.export_dir / f"{thread_id}.docx"
         export_path.unlink(missing_ok=True)
 
@@ -158,8 +192,8 @@ class WorkflowManager:
         export_tailored_docx(TailoringResult.model_validate(current.result), destination)
         return destination
 
-    @staticmethod
     def _response(
+        self,
         thread_id: UUID,
         state: dict[str, Any] | JobPilotState,
         *,
@@ -182,6 +216,7 @@ class WorkflowManager:
         return WorkflowRunResponse(
             thread_id=thread_id,
             status=status,
+            archived=self._is_archived(thread_id),
             claims=state_values.get("claims", []),
             blocked_claims=state_values.get("blocked_claims", []),
             token_usage=state_values.get("token_usage"),

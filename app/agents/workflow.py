@@ -33,6 +33,8 @@ class JobPilotState(TypedDict, total=False):
     writer_attempts: int
     approval_status: str
     result: dict[str, Any]
+    application_summary: str
+    cover_letter: str
 
 
 def parse_node(state: JobPilotState) -> JobPilotState:
@@ -99,15 +101,42 @@ def approval_node(state: JobPilotState) -> JobPilotState:
 
 def finalize_node(state: JobPilotState) -> JobPilotState:
     approved = state.get("approval_status") == "approved"
+    request = TailoringRequest.model_validate(state["request"])
+    approved_claims = (
+        [Claim.model_validate(item) for item in state.get("claims", [])] if approved else []
+    )
+    application_summary: str | None = None
+    cover_letter: str | None = None
+    if approved_claims:
+        claim_text = " ".join(claim.text for claim in approved_claims)
+        if request.language == "zh":
+            application_summary = f"与岗位相关的证据支持经历：{claim_text}"
+            cover_letter = (
+                "您好：\n\n我希望申请该岗位。以下经历均来自可核验的项目材料："
+                f"{claim_text}\n\n期待进一步交流这些经历与岗位需求的匹配方式。"
+            )
+        else:
+            application_summary = (
+                f"Evidence-supported experience relevant to this role: {claim_text}"
+            )
+            cover_letter = (
+                "Dear Hiring Team,\n\nI am applying for this role with the following "
+                f"evidence-supported experience: {claim_text}\n\nI would welcome the opportunity "
+                "to discuss how this experience aligns with your requirements."
+            )
     result = TailoringResult(
         analysis=JobAnalysis.model_validate(state["analysis"]),
         evidence_map=[EvidenceMap.model_validate(item) for item in state["evidence_map"]],
-        claims=(
-            [Claim.model_validate(item) for item in state.get("claims", [])] if approved else []
-        ),
+        claims=approved_claims,
         blocked_claims=[Claim.model_validate(item) for item in state.get("blocked_claims", [])],
+        application_summary=application_summary,
+        cover_letter=cover_letter,
     )
-    return {"result": result.model_dump(mode="json")}
+    return {
+        "application_summary": application_summary or "",
+        "cover_letter": cover_letter or "",
+        "result": result.model_dump(mode="json"),
+    }
 
 
 def build_workflow(

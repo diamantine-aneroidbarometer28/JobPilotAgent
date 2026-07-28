@@ -11,7 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="/" aria-label="JobPilot home"><span class="brand-mark">JP</span><span><strong>JobPilot</strong><small>Evidence-first application copilot</small></span></a>
-    <nav><a href="#workflow">Workspace</a><a href="/docs">API</a><span class="status-pill" id="api-status"><span class="status-dot"></span>Checking API</span></nav>
+    <nav><a href="#workflow">Workspace</a><a href="/docs">API</a><input class="access-token" id="access-token" type="password" placeholder="Optional access token" aria-label="Access token" /><span class="status-pill" id="api-status"><span class="status-dot"></span>Checking API</span></nav>
   </header>
 
   <main>
@@ -64,7 +64,7 @@
         <div class="empty-state" id="empty-state"><div class="empty-visual"><span></span><span></span><span></span></div><h4>Your review queue is ready for input</h4><p>Submit a role and at least one evidence source. Every proposed claim will appear here with its supporting source IDs.</p></div>
         <div class="review-content hidden" id="review-content">
           <div class="summary-row"><div><span>Thread</span><code id="thread-id">—</code></div><div><span>Usage</span><strong id="token-usage">Local mode</strong></div></div>
-          <div class="claim-list" id="claim-list"></div>
+          <div class="claim-list" id="claim-list"></div><div class="generated-materials hidden" id="generated-materials"><h4>Application summary</h4><p id="application-summary"></p><h4>Cover letter</h4><pre id="cover-letter"></pre></div>
           <div class="blocked-section hidden" id="blocked-section"><h4>Needs revision</h4><div id="blocked-list"></div></div>
           <div class="decision-bar" id="decision-bar"><button class="secondary-button reject" id="reject-button" type="button">Reject</button><button class="primary-button approve" id="approve-button" type="button">Approve claims <span>✓</span></button></div>
           <a class="download-button hidden" id="download-button" href="#">Download audited DOCX <span>↓</span></a>

@@ -49,6 +49,14 @@ def export_tailored_docx(
         "Only human-approved, evidence-supported claims are included in this document."
     )
 
+    if result.application_summary:
+        document.add_heading("Application Summary", level=1)
+        document.add_paragraph(result.application_summary)
+
+    if result.cover_letter:
+        document.add_heading("Cover Letter", level=1)
+        for block in result.cover_letter.split("\n\n"):
+            document.add_paragraph(block)
     document.add_heading("Tailored Claims", level=1)
     for claim in result.claims:
         paragraph = document.add_paragraph(style="List Bullet")
