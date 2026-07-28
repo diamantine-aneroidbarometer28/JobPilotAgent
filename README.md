@@ -4,6 +4,7 @@
 
 [![Quality](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml/badge.svg)](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml)
 [![Release](https://img.shields.io/github/v/release/YueranCao2001/JobPilotAgent?display_name=tag&sort=semver)](https://github.com/YueranCao2001/JobPilotAgent/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 
