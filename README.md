@@ -20,7 +20,7 @@ JobPilot turns this process into an auditable workflow:
 
 - Parse English and Chinese job descriptions into structured requirements.
 - Normalize common skills such as Python, FastAPI, SQL, RAG, LLMs, and LangGraph.
-- Chunk resume text, Markdown, and project notes for weighted lexical retrieval.
+- Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
 - Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
 - Detect numerical metrics that are absent from the supporting evidence.
 - Expose FastAPI endpoints for health checks, tailoring, and application tracking.
@@ -99,7 +99,7 @@ The current milestone does not require Node.js or Docker. Supported Python versi
 ```powershell
 git clone https://github.com/<your-account>/JobPilotAgent.git
 cd JobPilotAgent
-uv sync
+uv sync --extra documents
 uv run uvicorn app.api.main:app --reload
 ```
 
@@ -161,12 +161,18 @@ JobPilotAgent/
 - FastAPI endpoints and SQLite application tracking.
 - Automated tests and a reproducible environment.
 
-### Milestone 2: Document ingestion and retrieval evaluation
+### Milestone 2: Document ingestion and retrieval evaluation — baseline complete
 
-- PDF, DOCX, and Markdown loaders.
+- PDF, DOCX, Markdown, and plain-text loaders.
 - Bilingual skill aliases and structure-aware chunking.
-- A manually labeled set of 30 retrieval queries.
-- Target: Recall@5 of at least 0.85.
+- A labeled baseline of 30 retrieval queries.
+- Current synthetic-baseline Recall@5: 1.00; target on real personal materials: at least 0.85.
+
+Run the reproducible baseline with:
+
+```powershell
+uv run python -m evals.score_retrieval
+```
 
 ### Milestone 3: Agent workflow
 

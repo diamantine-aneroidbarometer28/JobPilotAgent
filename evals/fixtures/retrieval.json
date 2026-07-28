@@ -1,0 +1,47 @@
+{
+  "documents": [
+    {"source_id": "api", "source_path": "projects/api.md", "content": "Built production REST APIs with Python, FastAPI, Pydantic validation, and OpenAPI documentation."},
+    {"source_id": "database", "source_path": "projects/database.md", "content": "Designed SQL data models using PostgreSQL and SQLite, including migrations and query optimization."},
+    {"source_id": "rag", "source_path": "projects/rag.md", "content": "Implemented retrieval augmented generation with hybrid search, evidence citations, and bilingual query normalization."},
+    {"source_id": "llm", "source_path": "projects/llm.md", "content": "Developed large language model workflows with structured outputs, prompt evaluation, and hallucination controls."},
+    {"source_id": "graph", "source_path": "projects/graph.md", "content": "Orchestrated durable agent workflows with LangGraph checkpoints, retries, and human approval nodes."},
+    {"source_id": "devops", "source_path": "projects/devops.md", "content": "Containerized services with Docker and created GitHub Actions continuous integration pipelines."},
+    {"source_id": "testing", "source_path": "projects/testing.md", "content": "Built pytest unit tests, integration testing suites, type checks, and regression quality gates."},
+    {"source_id": "ml", "source_path": "projects/ml.md", "content": "Trained and evaluated machine learning models with feature engineering and reproducible experiments."},
+    {"source_id": "nlp", "source_path": "projects/nlp.md", "content": "Created natural language processing pipelines for classification, entity extraction, and Chinese text analysis."},
+    {"source_id": "cloud", "source_path": "projects/cloud.md", "content": "Deployed API services on AWS and Azure with monitoring, secrets management, and scalable infrastructure."}
+  ],
+  "queries": [
+    {"text": "Python FastAPI backend development", "expected_source_id": "api"},
+    {"text": "Build validated REST interfaces", "expected_source_id": "api"},
+    {"text": "Pydantic API schema experience", "expected_source_id": "api"},
+    {"text": "PostgreSQL query optimization", "expected_source_id": "database"},
+    {"text": "SQLite data modeling", "expected_source_id": "database"},
+    {"text": "SQL database migrations", "expected_source_id": "database"},
+    {"text": "Hybrid RAG retrieval", "expected_source_id": "rag"},
+    {"text": "Evidence citations for retrieval augmented generation", "expected_source_id": "rag"},
+    {"text": "双语检索增强生成", "expected_source_id": "rag"},
+    {"text": "LLM structured output evaluation", "expected_source_id": "llm"},
+    {"text": "Large language model hallucination control", "expected_source_id": "llm"},
+    {"text": "大模型提示词评估", "expected_source_id": "llm"},
+    {"text": "LangGraph durable workflow", "expected_source_id": "graph"},
+    {"text": "Agent checkpoints and retries", "expected_source_id": "graph"},
+    {"text": "Human approval workflow nodes", "expected_source_id": "graph"},
+    {"text": "Docker container deployment", "expected_source_id": "devops"},
+    {"text": "GitHub Actions CI/CD", "expected_source_id": "devops"},
+    {"text": "持续集成和容器化", "expected_source_id": "devops"},
+    {"text": "pytest unit testing", "expected_source_id": "testing"},
+    {"text": "Regression quality gates", "expected_source_id": "testing"},
+    {"text": "Integration tests and type checks", "expected_source_id": "testing"},
+    {"text": "Machine learning feature engineering", "expected_source_id": "ml"},
+    {"text": "Reproducible model experiments", "expected_source_id": "ml"},
+    {"text": "机器学习模型训练评估", "expected_source_id": "ml"},
+    {"text": "Natural language processing classification", "expected_source_id": "nlp"},
+    {"text": "Entity extraction pipeline", "expected_source_id": "nlp"},
+    {"text": "中文自然语言处理", "expected_source_id": "nlp"},
+    {"text": "Deploy services to AWS", "expected_source_id": "cloud"},
+    {"text": "Azure monitoring and secrets", "expected_source_id": "cloud"},
+    {"text": "Scalable cloud infrastructure", "expected_source_id": "cloud"}
+  ]
+}
+

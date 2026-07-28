@@ -3,20 +3,28 @@ import re
 from app.schemas import JobAnalysis, JobRequirement
 from app.schemas.models import RequirementCategory
 
-SKILL_ALIASES = {
+SKILL_ALIASES: dict[str, set[str]] = {
     "python": {"python"},
     "fastapi": {"fastapi"},
-    "sql": {"sql", "sqlite", "postgresql", "mysql"},
-    "rag": {"rag", "retrieval augmented generation", "检索增强"},
+    "sql": {"sql", "sqlite", "postgresql", "postgres", "mysql", "数据库"},
+    "rag": {"rag", "retrieval augmented generation", "检索增强生成", "检索增强"},
     "llm": {"llm", "large language model", "大语言模型", "大模型"},
     "langgraph": {"langgraph"},
-    "docker": {"docker", "container", "容器"},
-    "git": {"git", "github"},
-    "testing": {"pytest", "testing", "unit test", "测试"},
+    "docker": {"docker", "container", "containers", "容器", "容器化"},
+    "git": {"git", "github", "版本控制"},
+    "testing": {"pytest", "testing", "unit test", "unit tests", "测试", "单元测试"},
+    "pydantic": {"pydantic"},
+    "machine-learning": {"machine learning", "机器学习"},
+    "nlp": {"nlp", "natural language processing", "自然语言处理"},
+    "api": {"api", "apis", "rest", "接口"},
+    "aws": {"aws", "amazon web services"},
+    "azure": {"azure"},
+    "ci-cd": {"ci/cd", "continuous integration", "github actions", "持续集成"},
 }
 
 PREFERRED_MARKERS = ("preferred", "nice to have", "bonus", "优先", "加分")
-RESPONSIBILITY_MARKERS = ("responsible", "you will", "职责", "负责")
+RESPONSIBILITY_MARKERS = ("responsible", "you will", "responsibilities", "职责", "负责")
+REQUIREMENT_MARKERS = ("require", "must", "need", "要求", "需要", "必备")
 
 
 def normalize_skills(text: str) -> list[str]:
@@ -24,8 +32,14 @@ def normalize_skills(text: str) -> list[str]:
     return [
         canonical
         for canonical, aliases in SKILL_ALIASES.items()
-        if any(alias.casefold() in lowered for alias in aliases)
+        if any(_contains_alias(lowered, alias.casefold()) for alias in aliases)
     ]
+
+
+def _contains_alias(text: str, alias: str) -> bool:
+    if alias.isascii():
+        return re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", text) is not None
+    return alias in text
 
 
 def _category(line: str) -> RequirementCategory:
@@ -52,7 +66,7 @@ def parse_job_description(text: str) -> JobAnalysis:
         skills = normalize_skills(line)
         if skills or any(
             marker in line.casefold()
-            for marker in (*PREFERRED_MARKERS, *RESPONSIBILITY_MARKERS, "require", "需要")
+            for marker in (*PREFERRED_MARKERS, *RESPONSIBILITY_MARKERS, *REQUIREMENT_MARKERS)
         ):
             category = _category(line)
             requirements.append(
