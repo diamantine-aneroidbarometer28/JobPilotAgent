@@ -1,0 +1,54 @@
+[project]
+name = "jobpilot-agent"
+version = "0.1.0"
+description = "Evidence-grounded job application copilot"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi>=0.128,<1",
+    "pydantic>=2.13,<3",
+    "sqlmodel>=0.0.31,<0.1",
+    "uvicorn>=0.40,<1",
+]
+
+[project.optional-dependencies]
+agent = [
+    "langgraph>=1.2,<2",
+    "openai>=2.20,<3",
+]
+documents = [
+    "pypdf>=6.6,<7",
+    "python-docx>=1.2,<2",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1",
+    "mypy>=1.19,<2",
+    "pytest>=9.0,<10",
+    "ruff>=0.14,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+strict = true
+
