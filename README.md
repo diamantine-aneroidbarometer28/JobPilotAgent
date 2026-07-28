@@ -23,7 +23,7 @@ JobPilot turns this process into an auditable workflow:
 - Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
 - Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
 - Detect numerical metrics that are absent from the supporting evidence.
-- Expose FastAPI endpoints for tailoring, resumable approval workflows, DOCX export, and application tracking.
+- Expose FastAPI endpoints and a responsive browser UI for tailoring, evidence review, approval, DOCX export, and application tracking.
 - Persist application records with SQLite and SQLModel.
 - Test the parsing, retrieval, validation, and API vertical slice.
 
@@ -103,7 +103,7 @@ uv sync --extra documents
 uv run uvicorn app.api.main:app --reload
 ```
 
-Open the interactive API documentation at `http://127.0.0.1:8000/docs`.
+Open the browser approval interface at `http://127.0.0.1:8000/` or the interactive API documentation at `http://127.0.0.1:8000/docs`.
 
 Run the quality checks:
 
@@ -152,6 +152,7 @@ JobPilotAgent/
 │   ├── api/            # FastAPI entry point
 │   ├── schemas/        # Evidence, claim, job, and request models
 │   ├── services/       # Parsing, retrieval, validation, and tailoring
+│   ├── ui/             # Browser-based human approval interface
 │   └── storage/        # SQLite application tracking
 ├── data/
 │   ├── source_docs/    # Local evidence materials
@@ -203,7 +204,8 @@ The workflow remains safe by default: it pauses before claims become exportable 
 - Current controlled-fixture results: grounding precision 1.00 and unsupported-claim rate 0.00.
 - Added semantic-overlap and expanded numerical-metric validation.
 - Added safe DOCX export for approved claims with an Evidence Audit appendix.
-- Next: latency/cost benchmark runs on real materials and a browser-based approval interface.
+- Added a responsive browser interface for evidence input, claim review, decisions, usage display, and DOCX download.
+- Next: latency/cost benchmark runs on real materials and direct document upload.
 
 Run both offline baselines with:
 
@@ -212,7 +214,7 @@ uv run python -m evals.score_retrieval
 uv run python -m evals.score_grounding
 ```
 
-These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions.
+These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
 
 ## Acceptance targets
 

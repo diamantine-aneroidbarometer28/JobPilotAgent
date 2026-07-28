@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Review evidence-grounded resume claims before exporting them."
+    />
+    <title>JobPilot Agent</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="JobPilot home">
+        <span class="brand-mark">JP</span>
+        <span>
+          <strong>JobPilot</strong>
+          <small>Evidence-first application copilot</small>
+        </span>
+      </a>
+      <div class="status-pill" id="api-status">
+        <span class="status-dot"></span>
+        Checking API
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Human approval, built in</p>
+          <h1>Turn project evidence into claims you can defend.</h1>
+          <p class="hero-copy">
+            JobPilot maps a role to your source material, blocks unsupported
+            statements, and pauses before anything becomes exportable.
+          </p>
+        </div>
+        <dl class="trust-grid" aria-label="Trust guarantees">
+          <div>
+            <dt>100%</dt>
+            <dd>source-linked exports</dd>
+          </div>
+          <div>
+            <dt>Local</dt>
+            <dd>checkpoint storage</dd>
+          </div>
+          <div>
+            <dt>Manual</dt>
+            <dd>final approval</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="workspace">
+        <form class="panel input-panel" id="workflow-form">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">01 · Input</p>
+              <h2>Role and evidence</h2>
+            </div>
+            <select id="language" name="language" aria-label="Output language">
+              <option value="en">English</option>
+              <option value="zh">Chinese</option>
+            </select>
+          </div>
+
+          <label for="job-description">Job description</label>
+          <textarea
+            id="job-description"
+            name="job_description"
+            rows="9"
+            minlength="20"
+            required
+            placeholder="Paste the responsibilities and requirements for the role…"
+          ></textarea>
+
+          <div class="field-row">
+            <div>
+              <label for="source-id">Source ID</label>
+              <input id="source-id" value="project" required />
+            </div>
+            <div>
+              <label for="source-path">Source path</label>
+              <input id="source-path" value="project-notes.md" required />
+            </div>
+          </div>
+
+          <label for="evidence-content">Resume or project evidence</label>
+          <textarea
+            id="evidence-content"
+            rows="9"
+            required
+            placeholder="Paste factual project notes, resume bullets, or README content…"
+          ></textarea>
+
+          <div class="privacy-note">
+            <span aria-hidden="true">◆</span>
+            Use only material you are permitted to process. External actions
+            remain disabled.
+          </div>
+
+          <button class="primary-button" type="submit" id="start-button">
+            Build evidence map
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <section class="panel review-panel" aria-live="polite">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">02 · Review</p>
+              <h2>Claim approval</h2>
+            </div>
+            <span class="run-status idle" id="run-status">Not started</span>
+          </div>
+
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">↳</div>
+            <h3>Your review queue will appear here</h3>
+            <p>
+              Submit a role and evidence source. JobPilot will stop before
+              export so you can inspect every claim.
+            </p>
+          </div>
+
+          <div class="review-content hidden" id="review-content">
+            <div class="summary-row">
+              <div>
+                <span>Thread</span>
+                <code id="thread-id">—</code>
+              </div>
+              <div>
+                <span>Usage</span>
+                <strong id="token-usage">Local mode</strong>
+              </div>
+            </div>
+
+            <div class="claim-list" id="claim-list"></div>
+            <div class="blocked-section hidden" id="blocked-section">
+              <h3>Needs revision</h3>
+              <div id="blocked-list"></div>
+            </div>
+
+            <div class="decision-bar" id="decision-bar">
+              <button class="secondary-button reject" id="reject-button" type="button">
+                Reject
+              </button>
+              <button class="primary-button approve" id="approve-button" type="button">
+                Approve claims
+                <span aria-hidden="true">✓</span>
+              </button>
+            </div>
+
+            <a class="download-button hidden" id="download-button" href="#">
+              Download audited DOCX
+              <span aria-hidden="true">↓</span>
+            </a>
+          </div>
+
+          <div class="error-message hidden" id="error-message" role="alert"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <span>JobPilot Agent</span>
+      <span>Evidence before eloquence.</span>
+    </footer>
+  </body>
+</html>
+

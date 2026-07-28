@@ -1,8 +1,11 @@
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.workflow_manager import WorkflowManager
 from app.api.workflow_routes import router as workflow_router
@@ -14,6 +17,8 @@ from app.schemas import (
 )
 from app.services.tailoring import tailor
 from app.storage.database import create_application, create_db_and_tables, list_applications
+
+UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 
 
 @asynccontextmanager
@@ -32,11 +37,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="JobPilot Agent",
-    version="0.2.0",
+    version="0.3.0",
     description="Evidence-grounded job application copilot",
     lifespan=lifespan,
 )
 app.include_router(workflow_router)
+app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
+
+
+@app.get("/", include_in_schema=False, response_class=FileResponse)
+def user_interface() -> FileResponse:
+    return FileResponse(UI_DIR / "index.html")
 
 
 @app.get("/health")
