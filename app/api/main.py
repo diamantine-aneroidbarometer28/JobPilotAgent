@@ -2,8 +2,9 @@ import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -12,9 +13,11 @@ from app.api.workflow_routes import router as workflow_router
 from app.schemas import (
     ApplicationCreate,
     ApplicationRead,
+    EvidenceDocument,
     TailoringRequest,
     TailoringResult,
 )
+from app.services.ingestion import UnsupportedDocumentError, load_uploaded_document
 from app.services.tailoring import tailor
 from app.storage.database import create_application, create_db_and_tables, list_applications
 
@@ -53,6 +56,27 @@ def user_interface() -> FileResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/v1/documents/upload", response_model=list[EvidenceDocument])
+async def upload_documents(
+    files: Annotated[list[UploadFile], File(min_length=1, max_length=5)],
+) -> list[EvidenceDocument]:
+    documents: list[EvidenceDocument] = []
+    for upload in files:
+        filename = Path(upload.filename or "").name
+        if not filename:
+            raise HTTPException(status_code=400, detail="Every upload requires a filename.")
+        content = await upload.read(5 * 1024 * 1024 + 1)
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(
+                status_code=413, detail=f"{filename} exceeds the 5 MB upload limit."
+            )
+        try:
+            documents.append(load_uploaded_document(filename, content))
+        except (UnsupportedDocumentError, ValueError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+    return documents
 
 
 @app.post("/v1/tailor", response_model=TailoringResult)

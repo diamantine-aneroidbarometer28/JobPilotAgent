@@ -1,5 +1,6 @@
 import hashlib
 from collections.abc import Callable
+from io import BytesIO
 from pathlib import Path
 
 from app.schemas import EvidenceDocument
@@ -12,6 +13,12 @@ class UnsupportedDocumentError(ValueError):
 def _source_id(path: Path) -> str:
     digest = hashlib.sha256(str(path.resolve()).encode()).hexdigest()[:12]
     return f"{path.stem.lower().replace(' ', '-')}-{digest}"
+
+
+def _uploaded_source_id(filename: str, content: bytes) -> str:
+    stem = Path(filename).stem.lower().replace(" ", "-")
+    digest = hashlib.sha256(content).hexdigest()[:12]
+    return f"{stem}-{digest}"
 
 
 def _read_text(path: Path) -> str:
@@ -72,3 +79,51 @@ def load_document(path: str | Path) -> EvidenceDocument:
 
 def load_documents(paths: list[str | Path]) -> list[EvidenceDocument]:
     return [load_document(path) for path in paths]
+
+
+def load_uploaded_document(filename: str, content: bytes) -> EvidenceDocument:
+    """Parse an uploaded document without persisting personal material to disk."""
+    suffix = Path(filename).suffix.casefold()
+    if suffix not in LOADERS:
+        supported = ", ".join(sorted(LOADERS))
+        raise UnsupportedDocumentError(
+            f"Unsupported document type '{suffix}'. Supported: {supported}"
+        )
+
+    if suffix in {".md", ".markdown", ".txt"}:
+        try:
+            extracted = content.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise ValueError("Text uploads must use UTF-8 encoding.") from error
+    elif suffix == ".pdf":
+        try:
+            from pypdf import PdfReader
+        except ImportError as error:
+            raise RuntimeError("Install document extras with: uv sync --extra documents") from error
+        extracted = "\n\n".join(
+            page.extract_text() or "" for page in PdfReader(BytesIO(content)).pages
+        )
+    else:
+        try:
+            from docx import Document
+        except ImportError as error:
+            raise RuntimeError("Install document extras with: uv sync --extra documents") from error
+        document = Document(BytesIO(content))
+        blocks = [
+            paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()
+        ]
+        for table in document.tables:
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if cells:
+                    blocks.append(" | ".join(cells))
+        extracted = "\n\n".join(blocks)
+
+    extracted = extracted.strip()
+    if not extracted:
+        raise ValueError(f"No extractable text found in: {filename}")
+    return EvidenceDocument(
+        source_id=_uploaded_source_id(filename, content),
+        source_path=filename,
+        content=extracted,
+    )

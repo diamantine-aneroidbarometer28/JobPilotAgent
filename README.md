@@ -2,7 +2,7 @@
 
 An evidence-grounded job application copilot that parses job descriptions, retrieves evidence from personal project materials, drafts traceable resume claims, and tracks applications.
 
-> Current status: Milestone 1, the evidence-chain core, is implemented. The project runs and can be tested without a model API key. Generative models and LangGraph orchestration are planned for later milestones.
+> Current status: Milestones 1-3 are complete, and the Milestone 4 evaluation/export core is operational. The project includes resumable agent workflows, direct document upload, human approval, controlled offline evaluations, and audited DOCX export. It remains usable without a model API key.
 
 ## Why JobPilot
 
@@ -23,7 +23,7 @@ JobPilot turns this process into an auditable workflow:
 - Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
 - Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
 - Detect numerical metrics that are absent from the supporting evidence.
-- Expose FastAPI endpoints and a responsive browser UI for tailoring, evidence review, approval, DOCX export, and application tracking.
+- Expose FastAPI endpoints and a responsive browser UI for document upload, tailoring, evidence review, approval, DOCX export, and application tracking.
 - Persist application records with SQLite and SQLModel.
 - Test the parsing, retrieval, validation, and API vertical slice.
 
@@ -138,6 +138,7 @@ Invoke-RestMethod -Method Post `
 The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
 
 - `POST /v1/workflows` starts a run and pauses for claim review.
+- `POST /v1/documents/upload` extracts evidence from up to five PDF, DOCX, TXT, or Markdown files without persisting the uploads.
 - `GET /v1/workflows/{thread_id}` returns saved state and review payloads.
 - `POST /v1/workflows/{thread_id}/decision` resumes with an approve or reject decision.
 - `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
@@ -204,8 +205,9 @@ The workflow remains safe by default: it pauses before claims become exportable 
 - Current controlled-fixture results: grounding precision 1.00 and unsupported-claim rate 0.00.
 - Added semantic-overlap and expanded numerical-metric validation.
 - Added safe DOCX export for approved claims with an Evidence Audit appendix.
-- Added a responsive browser interface for evidence input, claim review, decisions, usage display, and DOCX download.
-- Next: latency/cost benchmark runs on real materials and direct document upload.
+- Added a redesigned responsive browser interface for drag-and-drop evidence input, claim review, decisions, usage display, and DOCX download.
+- Added privacy-preserving direct document upload with file-count, type, and 5 MB per-file limits.
+- Next: latency/cost benchmark runs on representative, privacy-scrubbed materials.
 
 Run both offline baselines with:
 
