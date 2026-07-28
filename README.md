@@ -23,7 +23,7 @@ JobPilot turns this process into an auditable workflow:
 - Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
 - Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
 - Detect numerical metrics that are absent from the supporting evidence.
-- Expose FastAPI endpoints for health checks, tailoring, and application tracking.
+- Expose FastAPI endpoints for tailoring, resumable approval workflows, DOCX export, and application tracking.
 - Persist application records with SQLite and SQLModel.
 - Test the parsing, retrieval, validation, and API vertical slice.
 
@@ -133,6 +133,17 @@ Invoke-RestMethod -Method Post `
   -ContentType "application/json" -Body $body
 ```
 
+## Workflow API
+
+The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
+
+- `POST /v1/workflows` starts a run and pauses for claim review.
+- `GET /v1/workflows/{thread_id}` returns saved state and review payloads.
+- `POST /v1/workflows/{thread_id}/decision` resumes with an approve or reject decision.
+- `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
+
+Without `OPENAI_API_KEY`, the API uses deterministic drafting. With a key configured, it enables the structured Responses writer while preserving local validation and human approval.
+
 ## Repository structure
 
 ```text
@@ -192,7 +203,7 @@ The workflow remains safe by default: it pauses before claims become exportable 
 - Current controlled-fixture results: grounding precision 1.00 and unsupported-claim rate 0.00.
 - Added semantic-overlap and expanded numerical-metric validation.
 - Added safe DOCX export for approved claims with an Evidence Audit appendix.
-- Next: latency/cost benchmark runs on real materials and a human approval interface.
+- Next: latency/cost benchmark runs on real materials and a browser-based approval interface.
 
 Run both offline baselines with:
 
