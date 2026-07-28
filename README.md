@@ -174,12 +174,14 @@ Run the reproducible baseline with:
 uv run python -m evals.score_retrieval
 ```
 
-### Milestone 3: Agent workflow
+### Milestone 3: Agent workflow — deterministic graph complete
 
-- LangGraph planner, writer, validator, retry, and approval nodes.
-- SQLite checkpoints and interrupted-run recovery.
-- OpenAI Responses API structured outputs.
-- Token and cost accounting.
+- Implemented explicit LangGraph parse, retrieve, draft, approval, and finalize nodes.
+- Implemented JSON-serializable state and human review with `interrupt()` / `Command(resume=...)`.
+- Implemented SQLite checkpoints and verified recovery in a newly opened graph process.
+- Next: OpenAI Responses API structured writing, retry policy, and token/cost accounting.
+
+The workflow remains safe by default: it pauses before claims become exportable and requires an explicit approval decision using the same thread ID.
 
 ### Milestone 4: Offline evaluation and export
 
