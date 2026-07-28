@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {"case_id": "g01", "claim": "Built Python FastAPI endpoints.", "evidence": [{"source_id": "a#1", "source_path": "api.md", "excerpt": "Built Python FastAPI endpoints with validation.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g02", "claim": "Designed PostgreSQL schemas.", "evidence": [{"source_id": "b#1", "source_path": "db.md", "excerpt": "Designed PostgreSQL schemas and migrations.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g03", "claim": "Implemented hybrid RAG retrieval.", "evidence": [{"source_id": "c#1", "source_path": "rag.md", "excerpt": "Implemented hybrid RAG retrieval with citations.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g04", "claim": "Created LangGraph approval workflows.", "evidence": [{"source_id": "d#1", "source_path": "graph.md", "excerpt": "Created LangGraph workflows with human approval.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g05", "claim": "Added pytest regression tests.", "evidence": [{"source_id": "e#1", "source_path": "tests.md", "excerpt": "Added pytest regression tests and quality gates.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g06", "claim": "Containerized the API with Docker.", "evidence": [{"source_id": "f#1", "source_path": "devops.md", "excerpt": "Containerized the API with Docker.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g07", "claim": "Built a Chinese NLP classifier.", "evidence": [{"source_id": "g#1", "source_path": "nlp.md", "excerpt": "Built a Chinese NLP classifier for support tickets.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g08", "claim": "Deployed services on AWS.", "evidence": [{"source_id": "h#1", "source_path": "cloud.md", "excerpt": "Deployed API services on AWS with monitoring.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g09", "claim": "Added Pydantic request validation.", "evidence": [{"source_id": "i#1", "source_path": "schemas.md", "excerpt": "Added Pydantic request validation to API routes.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g10", "claim": "Created GitHub Actions CI.", "evidence": [{"source_id": "j#1", "source_path": "ci.md", "excerpt": "Created GitHub Actions CI for tests and linting.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g11", "claim": "Reduced latency by 30%.", "evidence": [{"source_id": "k#1", "source_path": "perf.md", "excerpt": "Reduced latency by 30% through caching.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g12", "claim": "Processed 10,000 records.", "evidence": [{"source_id": "l#1", "source_path": "etl.md", "excerpt": "Processed 10,000 records in the evaluation run.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g13", "claim": "Cut review time to 8 minutes.", "evidence": [{"source_id": "m#1", "source_path": "metrics.md", "excerpt": "Cut review time to 8 minutes per application.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g14", "claim": "Improved Recall@5 through bilingual aliases.", "evidence": [{"source_id": "n#1", "source_path": "eval.md", "excerpt": "Improved Recall@5 through bilingual skill aliases.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g15", "claim": "Persisted application state in SQLite.", "evidence": [{"source_id": "o#1", "source_path": "storage.md", "excerpt": "Persisted application state in SQLite.", "confidence": 1}], "expected_status": "supported"},
+    {"case_id": "g16", "claim": "Reduced latency by 50%.", "evidence": [{"source_id": "p#1", "source_path": "perf.md", "excerpt": "Improved request latency through caching.", "confidence": 1}], "expected_status": "partial"},
+    {"case_id": "g17", "claim": "Processed 1 million resumes.", "evidence": [{"source_id": "q#1", "source_path": "scale.md", "excerpt": "Processed a local resume evaluation fixture.", "confidence": 1}], "expected_status": "partial"},
+    {"case_id": "g18", "claim": "Achieved 99.9% availability.", "evidence": [{"source_id": "r#1", "source_path": "ops.md", "excerpt": "Added service health monitoring.", "confidence": 1}], "expected_status": "partial"},
+    {"case_id": "g19", "claim": "Led Kubernetes production deployments.", "evidence": [{"source_id": "s#1", "source_path": "parser.md", "excerpt": "Built a Python job-description parser.", "confidence": 1}], "expected_status": "unsupported"},
+    {"case_id": "g20", "claim": "Managed a team of twelve engineers.", "evidence": [], "expected_status": "unsupported"}
+  ]
+}
+

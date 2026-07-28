@@ -186,11 +186,22 @@ uv run python -m evals.score_retrieval
 
 The workflow remains safe by default: it pauses before claims become exportable and requires an explicit approval decision using the same thread ID. The default model is `gpt-5.6-terra` for a quality/cost balance. Cost estimates use the public rates recorded on 2026-07-28 and should be reviewed when model pricing changes; cached-token adjustments are not yet included.
 
-### Milestone 4: Offline evaluation and export
+### Milestone 4: Offline evaluation and export — evaluation/export core complete
 
-- 20 job-description fixtures with claim-level labels.
-- Grounding precision, unsupported-claim rate, coverage, latency, and cost evaluation.
-- DOCX export and a human approval interface.
+- Added 20 claim-level grounding labels covering supported, partial, and unsupported cases.
+- Current controlled-fixture results: grounding precision 1.00 and unsupported-claim rate 0.00.
+- Added semantic-overlap and expanded numerical-metric validation.
+- Added safe DOCX export for approved claims with an Evidence Audit appendix.
+- Next: latency/cost benchmark runs on real materials and a human approval interface.
+
+Run both offline baselines with:
+
+```powershell
+uv run python -m evals.score_retrieval
+uv run python -m evals.score_grounding
+```
+
+These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions.
 
 ## Acceptance targets
 
